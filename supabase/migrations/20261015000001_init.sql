@@ -9,17 +9,18 @@ create table public.stays (
   id uuid primary key default gen_random_uuid(),
   name text not null check (char_length(name) between 2 and 120),
   kind public.stay_kind not null default 'other',
-  city text not null,
-  state text not null,
+  city text not null check (char_length(city) between 1 and 80),
+  state text not null check (char_length(state) between 1 and 80),
   lat double precision not null check (lat between 6.7 and 35.7),
   lon double precision not null check (lon between 68.1 and 97.4),
-  osm_type text,
-  osm_id bigint,
+  osm_type text check (osm_type in ('N', 'W', 'R')),
+  osm_id bigint check (osm_id > 0),
   created_at timestamptz not null default now(),
   -- reserved for deferred owner verification (no UI in v1)
   claimed_by text,
   claimed_at timestamptz,
-  claimed_contact text
+  claimed_contact text,
+  constraint stays_osm_pair check ((osm_type is null) = (osm_id is null))
 );
 
 create unique index stays_osm_unique on public.stays (osm_type, osm_id) where osm_id is not null;
@@ -38,7 +39,7 @@ create table public.readings (
   device_hash text not null,
   ip_hash text not null,
   distance_m integer not null check (distance_m >= 0 and distance_m <= 150),
-  reading_day date not null default (now() at time zone 'utc')::date,
+  reading_day date not null default (now() at time zone 'Asia/Kolkata')::date,
   created_at timestamptz not null default now(),
   unique (stay_id, device_hash, reading_day)
 );
@@ -54,7 +55,7 @@ create policy "stays are publicly readable" on public.stays for select using (tr
 
 -- Aggregates (median per stay). Recency weighting and bands are applied in app code (milestone 7).
 -- security_invoker is off so anon can read aggregates without reading raw readings (hashes).
-create view public.stay_aggregates as
+create view public.stay_aggregates with (security_invoker = false) as
 select
   stay_id,
   count(*)::int as reading_count,
@@ -65,7 +66,7 @@ select
 from public.readings
 group by stay_id;
 
-create view public.spot_aggregates as
+create view public.spot_aggregates with (security_invoker = false) as
 select
   stay_id,
   spot,
@@ -77,4 +78,7 @@ select
 from public.readings
 group by stay_id, spot;
 
+-- Supabase grants broad default privileges to anon/authenticated; strip them, then grant read-only access
+-- to what the public API may see. Readings (device/IP hashes) are never readable by anon.
+revoke all on public.stays, public.readings, public.stay_aggregates, public.spot_aggregates from anon, authenticated;
 grant select on public.stays, public.stay_aggregates, public.spot_aggregates to anon, authenticated;

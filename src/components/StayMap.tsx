@@ -17,9 +17,12 @@ export function StayMap({ lat, lon, name }: { lat: number; lon: number; name: st
           maxZoom: 19,
           attribution: "&copy; OpenStreetMap contributors",
         }).addTo(map);
+        // Leaflet treats string tooltip content as HTML, so pass a text node (stay names are user-supplied).
+        const label = document.createElement("span");
+        label.textContent = name;
         L.circleMarker([lat, lon], { radius: 9, color: "#1d4ed8", fillColor: "#2563eb", fillOpacity: 0.9, weight: 3 })
           .addTo(map)
-          .bindTooltip(name);
+          .bindTooltip(label);
       })
       .catch(() => setFailed(true));
     return () => {

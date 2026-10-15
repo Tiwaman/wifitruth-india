@@ -71,7 +71,11 @@ describe("hashing", () => {
     expect(hashValue("a", "ip", "1.2.3.4")).not.toContain("1.2.3.4");
   });
   it("salt: env wins, dev fallback, none in production", () => {
-    expect(getSalt({ HASH_SALT: "s", NODE_ENV: "production" })).toBe("s");
+    const long = "a-long-random-salt-value";
+    expect(getSalt({ HASH_SALT: long, NODE_ENV: "production" })).toBe(long);
+    expect(getSalt({ HASH_SALT: "short", NODE_ENV: "production" })).toBeNull();
+    expect(getSalt({ HASH_SALT: "   ", NODE_ENV: "production" })).toBeNull();
+    expect(getSalt({ HASH_SALT: "s", NODE_ENV: "development" })).toBe("s");
     expect(getSalt({ NODE_ENV: "development" })).toBeTruthy();
     expect(getSalt({ NODE_ENV: "production" })).toBeNull();
   });

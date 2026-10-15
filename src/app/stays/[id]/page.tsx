@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getStore } from "@/lib/data";
+import { isUuid } from "@/lib/http";
 import { getStaySummary } from "@/lib/stay-summary";
 import { BAND_LABEL, formatMbps } from "@/lib/format";
 import { StayMeasure } from "@/components/StayMeasure";
@@ -12,6 +13,7 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
+  if (!isUuid(id)) return { title: "Stay not found" };
   const store = getStore();
   const stay = await store.getStay(id).catch(() => null);
   if (!stay) return { title: "Stay not found" };
@@ -31,6 +33,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 export default async function StayPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  if (!isUuid(id)) notFound();
   const store = getStore();
   const stay = await store.getStay(id);
   if (!stay) notFound();

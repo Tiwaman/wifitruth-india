@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 import { getStore } from "@/lib/data";
+import { isUuid } from "@/lib/http";
 import { getStaySummary } from "@/lib/stay-summary";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params;
+  if (!isUuid(id)) return NextResponse.json({ error: "Stay not found." }, { status: 404 });
   const store = getStore();
   try {
     const stay = await store.getStay(id);

@@ -1,11 +1,13 @@
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
+import { getSiteUrl } from "@/lib/site";
 import "./globals.css";
 
 const description =
   "Real WiFi speeds at hostels, hotels and homestays across India, measured on the spot by travellers and verified by GPS.";
 
 export const metadata: Metadata = {
+  metadataBase: getSiteUrl(),
   title: { default: "WiFiTruth India - real WiFi speeds at stays", template: "%s | WiFiTruth India" },
   description,
   applicationName: "WiFiTruth India",

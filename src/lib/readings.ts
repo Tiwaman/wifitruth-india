@@ -22,6 +22,8 @@ export type ParseResult =
   | { ok: true; deviceId: string; values: ReadingValues; location: unknown }
   | { ok: false; error: string };
 
+export const MIN_SALT_LENGTH = 16;
+
 const round = (n: number, d = 2) => Math.round(n * 10 ** d) / 10 ** d;
 
 export function parseReadingBody(body: unknown): ParseResult {
@@ -79,8 +81,9 @@ export function hashValue(salt: string, kind: "device" | "ip", value: string): s
 }
 
 export function getSalt(env: Record<string, string | undefined> = process.env): string | null {
-  if (env.HASH_SALT) return env.HASH_SALT;
-  if (env.NODE_ENV === "production") return null;
+  const salt = env.HASH_SALT?.trim();
+  if (env.NODE_ENV === "production") return salt && salt.length >= MIN_SALT_LENGTH ? salt : null;
+  if (salt) return salt;
   return "dev-only-salt-not-secret";
 }
 

@@ -3,10 +3,14 @@ import { NewStay, STAY_KINDS, StayKind } from "./types";
 
 export type StayValidation = { ok: true; value: NewStay } | { ok: false; error: string };
 
-const text = (v: unknown, max: number) => (typeof v === "string" ? v.trim().slice(0, max) : "");
+// Strips control and bidi/zero-width characters and collapses whitespace. HTML is not stripped here:
+// React escapes text on render and the map tooltip is built with textContent.
+const INVISIBLE = /[\u0000-\u001f\u007f-\u009f​-‏‪-‮⁦-⁩﻿]/g;
+const text = (v: unknown, max: number) =>
+  typeof v === "string" ? v.replace(INVISIBLE, " ").replace(/\s+/g, " ").trim().slice(0, max) : "";
 
 export function validateNewStay(body: unknown): StayValidation {
-  const b = (body ?? {}) as Record<string, unknown>;
+  const b = (typeof body === "object" && body !== null ? body : {}) as Record<string, unknown>;
   const name = text(b.name, 120);
   const city = text(b.city, 80);
   const state = text(b.state, 80);
@@ -18,7 +22,7 @@ export function validateNewStay(body: unknown): StayValidation {
   if (!state) return { ok: false, error: "State is required." };
   if (!STAY_KINDS.includes(kind)) return { ok: false, error: "Unknown stay type." };
   if (!inIndiaBbox(lat, lon)) return { ok: false, error: "Location must be inside India." };
-  const osmType = typeof b.osmType === "string" ? text(b.osmType, 1) : null;
-  const osmId = typeof b.osmId === "number" && Number.isInteger(b.osmId) ? b.osmId : null;
-  return { ok: true, value: { name, kind, city, state, lat, lon, osmType: osmId ? osmType : null, osmId } };
+  const osmId = typeof b.osmId === "number" && Number.isSafeInteger(b.osmId) && b.osmId > 0 ? b.osmId : null;
+  const osmType = osmId && typeof b.osmType === "string" && /^[NWR]$/.test(b.osmType) ? b.osmType : null;
+  return { ok: true, value: { name, kind, city, state, lat, lon, osmType, osmId: osmType ? osmId : null } };
 }

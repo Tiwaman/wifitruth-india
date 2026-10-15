@@ -54,3 +54,14 @@
 ## Test results (after M9)
 - Vitest: 11 files, 96 tests pass. ESLint and `tsc` clean. `next build` clean.
 - Playwright (chromium, mocked geolocation and speed test engine): 17 pass.
+
+## M10 E2E and hardening (done)
+- E2E: Playwright now runs its own dev server on port 3100 (`reuseExistingServer: false`), wipes `.data/e2e.json` at start (`e2e/reset-data.mjs`), stubs OSM tiles and Photon, mocks geolocation and the speed engine. New specs: `flows` (full submit flow with aggregate and red/yellow/green percentages 50/50 -> 33/67, GPS denied / too far / low accuracy, duplicate, rate-limit message, add stay then test it, out-of-India, mobile viewport flow), `a11y` (axe wcag2a/2aa/21a/21aa on home, stay with and without readings), `hardening` (XSS, validation, no leaks, no stored raw coordinates, headers, sitemap/robots, canonical). 35 tests; full suite run 3 times consecutively, all green. Rate limit UI is tested with a mocked 429 (the real limiter is unit tested; e2e limits are raised).
+- Hardening fixes: Leaflet tooltip rendered the stay name as HTML (stored XSS) -> now a text node; non-UUID stay ids reached Supabase and produced 500s -> `isUuid` guard on all id routes and the stay page; JSON body size cap (8 KB, 413) via `readJson`; try/catch on every route (generic messages only); new-stay rate limit (10 / 10 min / IP) and control/bidi character stripping, osm type restricted to N/W/R; `HASH_SALT` must be 16+ chars in production; security headers (nosniff, DENY framing, referrer, permissions-policy geolocation=self), `X-Powered-By` removed.
+- Supabase adapter: duplicate only on Postgres code 23505 (other 409s throw), OSM-unique race returns the existing stay, search now matches name/city/state with filter-syntax characters stripped (parity with the memory store); unit tests with mocked fetch.
+- SQL review fixes: revoke default anon/authenticated privileges then grant read-only on stays and the views, `security_invoker = false` explicit, `reading_day` default IST (app always supplies it), length checks on city/state, osm_type in N/W/R, osm pair constraint, osm_id > 0. Static tests in `src/lib/migration.test.ts`. Still not executed on a live Postgres (none available locally).
+- Docs: README (run, tests, env, Supabase setup, Vercel deploy, limitations, roadmap), `metadataBase` from `NEXT_PUBLIC_SITE_URL` (fallback Vercel production URL, then localhost), `sitemap.xml` (home, privacy, all stays), robots references the sitemap.
+- Known gap found: the India bbox accepts Nepal/Bangladesh/north Sri Lanka points; documented, polygon is on the roadmap.
+
+## Final gate (after M10)
+- ESLint, `tsc`, `next build` clean. Vitest: 15 files, 120 tests pass. Playwright: 35 pass, 3 consecutive runs.

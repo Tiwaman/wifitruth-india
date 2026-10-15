@@ -47,8 +47,11 @@ export function createSupabaseStore(url: string, serviceKey: string): DataStore 
 
   return {
     async listStays({ q, limit = 20 } = {}) {
-      const clean = q?.replace(/[*,()%\\]/g, " ").trim();
-      const filter = clean ? `&name=ilike.${encodeURIComponent(`*${clean}*`)}` : "";
+      const clean = q?.replace(/[^\p{L}\p{N} '-]/gu, " ").replace(/\s+/g, " ").trim();
+      const pattern = `*${clean}*`;
+      const filter = clean
+        ? `&or=${encodeURIComponent(`(name.ilike.${pattern},city.ilike.${pattern},state.ilike.${pattern})`)}`
+        : "";
       return (await rows(`stays?select=*&order=name&limit=${limit}${filter}`)).map(toStay);
     },
     async getStay(id) {
@@ -76,6 +79,12 @@ export function createSupabaseStore(url: string, serviceKey: string): DataStore 
           osm_id: input.osmId ?? null,
         }),
       });
+      if (res.status === 409 && input.osmType && input.osmId) {
+        const r = await rows(
+          `stays?select=*&osm_type=eq.${encodeURIComponent(input.osmType)}&osm_id=eq.${input.osmId}&limit=1`,
+        );
+        if (r[0]) return toStay(r[0]);
+      }
       if (!res.ok) throw new Error(`Supabase error ${res.status}`);
       return toStay(((await res.json()) as Row[])[0]);
     },
@@ -97,7 +106,10 @@ export function createSupabaseStore(url: string, serviceKey: string): DataStore 
           reading_day: input.readingDay,
         }),
       });
-      if (res.status === 409) return { ok: false, reason: "duplicate" };
+      if (res.status === 409) {
+        const err = (await res.json().catch(() => null)) as { code?: string } | null;
+        if (err?.code === "23505") return { ok: false, reason: "duplicate" };
+      }
       if (!res.ok) throw new Error(`Supabase error ${res.status}`);
       return { ok: true, reading: toReading(((await res.json()) as Row[])[0]) };
     },
