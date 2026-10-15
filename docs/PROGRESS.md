@@ -39,6 +39,18 @@
 - `src/lib/stay-summary.ts` and `GET /api/stays/[id]/summary` (stay + summary + spots); `getHomeLists` (recent = latest readings; top = >= 3 readings, ranked by band then median download).
 - Tests: 36 scoring tests (thresholds, boundaries, downgrades, weighting, percentages, empty/single) + service tests.
 
-## Test results
-- Vitest: 5 files, 23 tests pass. ESLint and `tsc` clean. `next build` clean (no warnings).
-- Playwright (chromium, mocked geolocation): 8 pass (smoke removed from count: smoke, GPS ok/too far/low accuracy/denied, search, add stay, outside India).
+## M8 Stay page and dashboard (done)
+- Stay page (`/stays/[id]`): `StaySummaryCard` (median download/upload/latency in Mbps/ms, Poor/Moderate/Good/Excellent badge, red/yellow/green `BandBar` with a percentage legend, sample count, last-tested recency, confidence, per-spot breakdown with mini bars), Leaflet map (`StayMap`, plain leaflet, OSM tiles, circle marker so no image assets are needed), then the verify / speed test / submit flow. The page refreshes after a successful submit.
+- Home: hero, search, "Top stays" (>= 3 readings) and "Recently tested" lists via `StayCard`.
+- Playwright: `e2e/dashboard.spec.ts` creates a fresh stay and readings through the API, then checks aggregates, band percentages, spots, home lists.
+
+## M9 Polish (done)
+- Mobile-first layout, shared header/footer with privacy note, `/privacy` page, skip link, visible focus ring, reduced-motion support, labels on all inputs, text colours of at least slate-700 on white, band shown by text and percentage as well as colour, progress bar with ARIA values, `aria-live` for status messages.
+- States: root `loading.tsx`, `error.tsx` (uses `retry`, the Next 16 API), `not-found.tsx`, empty states (no readings, empty home lists), home list failure message, map failure fallback.
+- SEO: title template, per-stay `generateMetadata` (title and description include band, Mbps and sample count), Open Graph/Twitter basics, canonical paths, `robots.txt` (disallows `/api/`). No sitemap, and `metadataBase` is not set (needs the deploy URL).
+- Rate-limit and duplicate messages are shown in yellow with plain wording; limits can be overridden by `RATE_LIMIT_IP_MAX` / `RATE_LIMIT_DEVICE_MAX`.
+- Known: a missing stay returns HTTP 200 with the not-found UI (streamed through `loading.tsx`), noindex is still emitted by Next.
+
+## Test results (after M9)
+- Vitest: 11 files, 96 tests pass. ESLint and `tsc` clean. `next build` clean.
+- Playwright (chromium, mocked geolocation and speed test engine): 17 pass.

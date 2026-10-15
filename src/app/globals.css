@@ -1,1 +1,14 @@
 @import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
+
+:focus-visible {
+  outline: 2px solid #1d4ed8;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

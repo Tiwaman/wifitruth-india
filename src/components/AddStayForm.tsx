@@ -32,9 +32,9 @@ export function AddStayForm({ initialName = "" }: { initialName?: string }) {
     router.push(`/stays/${json.stay.id}`);
   }
 
-  const input = "w-full rounded border border-slate-300 p-2";
+  const input = "w-full rounded border border-slate-400 p-2 bg-white";
   return (
-    <form onSubmit={onSubmit} className="space-y-3 rounded border border-slate-200 bg-white p-4">
+    <form onSubmit={onSubmit} className="space-y-3 rounded-xl border border-slate-200 bg-white p-4">
       <h2 className="font-semibold">Add a missing stay</h2>
       <label className="block text-sm">
         Name
@@ -68,13 +68,13 @@ export function AddStayForm({ initialName = "" }: { initialName?: string }) {
           <input name="lon" type="number" step="any" required className={input} />
         </label>
       </div>
-      <p className="text-xs text-slate-500">Tip: right-click the place in a maps app to copy its coordinates.</p>
+      <p className="text-xs text-slate-700">Tip: right-click the place in a maps app to copy its coordinates.</p>
       {error && (
         <p role="alert" className="text-sm text-red-700">
           {error}
         </p>
       )}
-      <button disabled={busy} className="rounded bg-slate-900 px-4 py-2 text-white disabled:opacity-60">
+      <button disabled={busy} className="rounded-lg bg-blue-700 px-4 py-2 font-medium text-white hover:bg-blue-800 disabled:opacity-60">
         {busy ? "Adding..." : "Add stay"}
       </button>
     </form>

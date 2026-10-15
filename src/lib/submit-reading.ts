@@ -34,8 +34,8 @@ const fail = (status: number, code: string, error: string, headers?: Record<stri
 export function createDefaultLimiters() {
   const windowMs = 10 * 60 * 1000;
   return {
-    ipLimiter: createRateLimiter({ max: 20, windowMs }),
-    deviceLimiter: createRateLimiter({ max: 8, windowMs }),
+    ipLimiter: createRateLimiter({ max: Number(process.env.RATE_LIMIT_IP_MAX) || 20, windowMs }),
+    deviceLimiter: createRateLimiter({ max: Number(process.env.RATE_LIMIT_DEVICE_MAX) || 8, windowMs }),
   };
 }
 

@@ -4,7 +4,7 @@ test("search finds seeded stay and opens it", async ({ page }) => {
   await page.goto("/");
   await page.getByLabel("Search stays").fill("kasol");
   await expect(page.getByTestId("known-stays").getByText("Zostel Kasol")).toBeVisible();
-  await page.getByText("Zostel Kasol").click();
+  await page.getByTestId("known-stays").getByText("Zostel Kasol").click();
   await expect(page.getByRole("heading", { name: "Zostel Kasol" })).toBeVisible();
 });
 

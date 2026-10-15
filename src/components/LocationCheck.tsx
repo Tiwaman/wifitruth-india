@@ -65,7 +65,7 @@ export function LocationCheck({
         type="button"
         onClick={request}
         disabled={busy}
-        className="rounded bg-slate-900 px-4 py-2 text-white disabled:opacity-60"
+        className="rounded-lg bg-blue-700 px-4 py-2 font-medium text-white hover:bg-blue-800 disabled:opacity-60"
       >
         {busy ? "Getting your location..." : state.status === "idle" ? "Verify I am at this stay" : "Check again"}
       </button>

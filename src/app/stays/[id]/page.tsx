@@ -1,23 +1,53 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getStore } from "@/lib/data";
+import { getStaySummary } from "@/lib/stay-summary";
+import { BAND_LABEL, formatMbps } from "@/lib/format";
 import { StayMeasure } from "@/components/StayMeasure";
+import { StaySummaryCard } from "@/components/StaySummaryCard";
+import { StayMap } from "@/components/StayMap";
 
 export const dynamic = "force-dynamic";
 
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const store = getStore();
+  const stay = await store.getStay(id).catch(() => null);
+  if (!stay) return { title: "Stay not found" };
+  const summary = await getStaySummary(store, id).catch(() => null);
+  const where = `${stay.city}, ${stay.state}`;
+  const description =
+    summary && summary.readingCount > 0 && summary.band
+      ? `WiFi at ${stay.name}, ${where}: ${BAND_LABEL[summary.band]}, about ${formatMbps(summary.medianDownloadMbps)} Mbps download from ${summary.readingCount} traveller readings.`
+      : `Be the first to test the WiFi at ${stay.name}, ${where}.`;
+  return {
+    title: `${stay.name} WiFi speed, ${stay.city}`,
+    description,
+    alternates: { canonical: `/stays/${id}` },
+    openGraph: { title: `${stay.name} WiFi speed`, description, type: "website" },
+  };
+}
+
 export default async function StayPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const stay = await getStore().getStay(id);
+  const store = getStore();
+  const stay = await store.getStay(id);
   if (!stay) notFound();
+  const summary = await getStaySummary(store, id);
   return (
-    <div className="space-y-4">
-      <Link href="/" className="text-sm text-blue-700 underline">
+    <div className="space-y-5">
+      <Link href="/" className="inline-block text-sm text-blue-800 underline">
         Back to search
       </Link>
-      <h1 className="text-2xl font-bold">{stay.name}</h1>
-      <p className="text-slate-600">
-        {stay.city}, {stay.state}
-      </p>
+      <header>
+        <h1 className="text-2xl font-bold tracking-tight">{stay.name}</h1>
+        <p className="text-slate-700">
+          {stay.city}, {stay.state}
+        </p>
+      </header>
+      <StaySummaryCard summary={summary} />
+      <StayMap lat={stay.lat} lon={stay.lon} name={stay.name} />
       <StayMeasure stay={{ id: stay.id, name: stay.name, lat: stay.lat, lon: stay.lon }} />
     </div>
   );

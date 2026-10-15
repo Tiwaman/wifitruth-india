@@ -73,9 +73,9 @@ export function StaySearch() {
         onChange={(e) => setQ(e.target.value)}
         placeholder="Search a hostel, hotel or homestay in India"
         aria-label="Search stays"
-        className="w-full rounded border border-slate-300 bg-white p-3"
+        className="w-full rounded-lg border border-slate-400 bg-white p-3"
       />
-      {loading && <p className="text-sm text-slate-500">Searching...</p>}
+      {loading && <p className="text-sm text-slate-700">Searching...</p>}
       {failed && (
         <p role="alert" className="text-sm text-red-700">
           Search failed. Please try again.
@@ -94,7 +94,7 @@ export function StaySearch() {
                 <li key={s.id}>
                   <Link href={`/stays/${s.id}`} className="block p-3 hover:bg-slate-50">
                     <span className="font-medium">{s.name}</span>
-                    <span className="block text-sm text-slate-600">
+                    <span className="block text-sm text-slate-700">
                       {s.city}, {s.state}
                     </span>
                   </Link>
@@ -104,13 +104,13 @@ export function StaySearch() {
           )}
           {places.length > 0 && (
             <div>
-              <h2 className="mb-1 text-sm font-semibold text-slate-600">More places from OpenStreetMap</h2>
+              <h2 className="mb-1 text-sm font-semibold text-slate-700">More places from OpenStreetMap</h2>
               <ul data-testid="places" className="divide-y rounded border bg-white">
                 {places.map((p, i) => (
                   <li key={`${p.osmType}${p.osmId}${i}`}>
                     <button type="button" onClick={() => pickPlace(p)} className="block w-full p-3 text-left hover:bg-slate-50">
                       <span className="font-medium">{p.name}</span>
-                      <span className="block text-sm text-slate-600">{[p.city, p.state].filter(Boolean).join(", ")}</span>
+                      <span className="block text-sm text-slate-700">{[p.city, p.state].filter(Boolean).join(", ")}</span>
                     </button>
                   </li>
                 ))}
@@ -118,14 +118,14 @@ export function StaySearch() {
             </div>
           )}
           {!loading && stays.length === 0 && places.length === 0 && (
-            <p className="text-sm text-slate-600">No matches found.</p>
+            <p className="text-sm text-slate-700">No matches found.</p>
           )}
           {active.placesError && (
-            <p className="text-xs text-slate-500">Map search is unavailable right now; showing known stays only.</p>
+            <p className="text-xs text-slate-700">Map search is unavailable right now; showing known stays only.</p>
           )}
         </div>
       )}
-      <button type="button" onClick={() => setShowAdd((v) => !v)} className="text-sm text-blue-700 underline">
+      <button type="button" onClick={() => setShowAdd((v) => !v)} className="text-sm text-blue-800 underline">
         {showAdd ? "Hide form" : "Cannot find your stay? Add it"}
       </button>
       {showAdd && <AddStayForm initialName={q.trim()} />}
