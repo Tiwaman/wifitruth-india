@@ -1,7 +1,24 @@
 import { NextResponse } from "next/server";
 import { buildPhotonUrl, normalizePhoton, TtlCache, type Place } from "@/lib/photon";
+import { buildNominatimUrl, normalizeNominatim } from "@/lib/nominatim";
 
 const cache = new TtlCache<Place[]>(10 * 60 * 1000, 200);
+const UA = "wifitruth-india/0.1";
+
+async function fetchJson(url: string, timeoutMs: number): Promise<unknown> {
+  const res = await fetch(url, { signal: AbortSignal.timeout(timeoutMs), headers: { "User-Agent": UA } });
+  if (!res.ok) throw new Error(`Upstream ${res.status}`);
+  return res.json();
+}
+
+// Photon first (built for search-as-you-type); Nominatim as fallback when Photon is down or unreachable.
+async function lookup(q: string): Promise<Place[]> {
+  try {
+    return normalizePhoton(await fetchJson(buildPhotonUrl(q), 3000));
+  } catch {
+    return normalizeNominatim(await fetchJson(buildNominatimUrl(q), 6000));
+  }
+}
 
 export async function GET(req: Request) {
   const q = (new URL(req.url).searchParams.get("q") ?? "").trim().slice(0, 100);
@@ -12,12 +29,7 @@ export async function GET(req: Request) {
   let placesError = false;
   if (!places) {
     try {
-      const res = await fetch(buildPhotonUrl(q), {
-        signal: AbortSignal.timeout(5000),
-        headers: { "User-Agent": "wifitruth-india/0.1" },
-      });
-      if (!res.ok) throw new Error(`Photon ${res.status}`);
-      places = normalizePhoton(await res.json());
+      places = await lookup(q);
       cache.set(key, places);
     } catch {
       places = [];
