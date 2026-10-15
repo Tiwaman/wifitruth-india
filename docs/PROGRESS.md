@@ -33,6 +33,12 @@
 - `HASH_SALT` required in production (503 `server_misconfigured` if missing); non-production uses a fixed non-secret dev salt. Rate limiters are in-memory per server instance (best effort on serverless).
 - `DataStore.listReadings` added (memory + Supabase). Client device id lives in localStorage (`src/lib/device-id.ts`). `StayMeasure` has the submit step. Playwright uses `DATA_FILE=.data/e2e.json` so tests do not touch dev data.
 
+## M7 Aggregation and bands (done)
+- `src/lib/scoring.ts` (pure): `bandFor` (Poor <10, Moderate 10-25, Good >=25; upload < 25% of the reached band's download threshold = one downgrade; latency > 150 ms = one downgrade; both can apply, floor Poor; "Excellent" label = undowngraded Good with download >= 50), `weightedMedian`, `recencyWeight` (<= 90 days 1.0, older 0.5), `confidenceFor` (<3 Low, 3-9 Medium, >=10 High, by raw count), `toPercentages` (whole numbers summing to 100), `summarize`, `summarizeStay` (per-spot breakdown).
+- Interpretation choices: stay/spot band is computed from the weighted medians; band percentages are recency-weighted shares of readings (each reading banded individually).
+- `src/lib/stay-summary.ts` and `GET /api/stays/[id]/summary` (stay + summary + spots); `getHomeLists` (recent = latest readings; top = >= 3 readings, ranked by band then median download).
+- Tests: 36 scoring tests (thresholds, boundaries, downgrades, weighting, percentages, empty/single) + service tests.
+
 ## Test results
 - Vitest: 5 files, 23 tests pass. ESLint and `tsc` clean. `next build` clean (no warnings).
 - Playwright (chromium, mocked geolocation): 8 pass (smoke removed from count: smoke, GPS ok/too far/low accuracy/denied, search, add stay, outside India).
