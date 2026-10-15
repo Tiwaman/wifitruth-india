@@ -1,5 +1,6 @@
 import type { DataStore } from "./data/store";
 import { MAX_ACCURACY_M, MAX_DISTANCE_M, validateLocationServer } from "./geo";
+import { isLocationCheckSkipped } from "./test-mode";
 import {
   clientIp,
   createRateLimiter,
@@ -68,19 +69,23 @@ export async function submitReading(stayId: string, body: unknown, headers: Pick
   const stay = await deps.store.getStay(stayId);
   if (!stay) return fail(404, "stay_not_found", "We could not find that stay.");
 
-  const loc = validateLocationServer(stay, parsed.location);
-  if (loc.status === "invalid") return fail(400, "location_invalid", "We could not read your location. Please verify your location again.");
-  if (loc.status === "low_accuracy")
-    return fail(422, "low_accuracy", `Your GPS is not accurate enough (about ${loc.accuracyM} m, need ${MAX_ACCURACY_M} m or better). Please verify your location again.`);
-  if (loc.status === "too_far")
-    return fail(422, "too_far", `You appear to be about ${loc.distanceM} m from ${stay.name}. You must be within ${MAX_DISTANCE_M} m to submit a reading.`);
+  let distanceM = 0;
+  if (!isLocationCheckSkipped()) {
+    const loc = validateLocationServer(stay, parsed.location);
+    if (loc.status === "invalid") return fail(400, "location_invalid", "We could not read your location. Please verify your location again.");
+    if (loc.status === "low_accuracy")
+      return fail(422, "low_accuracy", `Your GPS is not accurate enough (about ${loc.accuracyM} m, need ${MAX_ACCURACY_M} m or better). Please verify your location again.`);
+    if (loc.status === "too_far")
+      return fail(422, "too_far", `You appear to be about ${loc.distanceM} m from ${stay.name}. You must be within ${MAX_DISTANCE_M} m to submit a reading.`);
+    distanceM = loc.distanceM!;
+  }
 
   const result = await deps.store.insertReading({
     stayId: stay.id,
     ...parsed.values,
     deviceHash,
     ipHash,
-    distanceM: loc.distanceM!,
+    distanceM,
     readingDay: readingDay(deps.now),
   });
   if (!result.ok)

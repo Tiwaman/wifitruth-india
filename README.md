@@ -46,6 +46,7 @@ The e2e suite starts its own dev server on port 3100 with an isolated data file 
 | `HASH_SALT` | production | Secret used to hash device ids and IPs. At least 16 characters, long and random. In production the app refuses submissions (503) if it is missing or short. Do not change it later unless you accept that "one reading per day" resets. |
 | `NEXT_PUBLIC_SITE_URL` | recommended | Public origin (e.g. `https://wifitruth.vercel.app`) for canonical URLs, Open Graph and the sitemap. Falls back to Vercel's production URL, then `http://localhost:3000`. |
 | `DATA_FILE` | no | Path of the local JSON data file (default `.data/db.json`). Ignored when Supabase is configured. |
+| `NEXT_PUBLIC_SKIP_LOCATION_CHECK` | no | TESTING ONLY. Set to `true` to skip the GPS check and allow repeat tests. Leave unset for real use. Requires a redeploy to change. |
 | `RATE_LIMIT_IP_MAX`, `RATE_LIMIT_DEVICE_MAX`, `RATE_LIMIT_STAY_MAX` | no | Per 10 minutes limits for submissions per IP (20), per device (8) and new stays per IP (10). |
 
 Generate a salt, for example: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`.

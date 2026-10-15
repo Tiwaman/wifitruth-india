@@ -13,6 +13,9 @@ export default defineConfig({
   webServer: {
     command: `node e2e/reset-data.mjs && npx next dev -p ${PORT}`,
     env: {
+      // Blank Supabase vars so tests always use the local JSON file, never a real database from .env.local.
+      NEXT_PUBLIC_SUPABASE_URL: "",
+      SUPABASE_SERVICE_ROLE_KEY: "",
       DATA_FILE: ".data/e2e.json",
       RATE_LIMIT_IP_MAX: "1000",
       RATE_LIMIT_DEVICE_MAX: "1000",

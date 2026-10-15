@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { createMemoryStore } from "./data/memory";
 import { SEED_STAYS } from "./data/seed";
 import { createDefaultLimiters, submitReading } from "./submit-reading";
@@ -76,5 +76,31 @@ describe("submitReading", () => {
   it("refuses without a salt", async () => {
     const res = await submitReading(stay.id, bodyFor(), h(), { ...mk(), salt: null });
     expect(res.status).toBe(503);
+  });
+});
+
+describe("submitReading with the location check skipped (test mode)", () => {
+  it("accepts a reading from far away or without a location, storing distance 0", async () => {
+    vi.stubEnv("NEXT_PUBLIC_SKIP_LOCATION_CHECK", "true");
+    try {
+      const deps = mk();
+      const far = await submitReading(stay.id, bodyFor({ location: { lat: 28.6, lon: 77.2, accuracy: 20 } }), h("1.1.1.1"), deps);
+      expect(far.status).toBe(201);
+      const none = await submitReading(stay.id, bodyFor({ deviceId: "dev-bbbbbbbbbbbbbbbb", location: null }), h("1.1.1.2"), deps);
+      expect(none.status).toBe(201);
+      const rows = await deps.store.listReadings({ stayId: stay.id });
+      expect(rows.map((r) => r.distanceM)).toEqual([0, 0]);
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+  it("still rejects far readings when the flag is off or not exactly true", async () => {
+    vi.stubEnv("NEXT_PUBLIC_SKIP_LOCATION_CHECK", "yes");
+    try {
+      const res = await submitReading(stay.id, bodyFor({ location: { lat: 28.6, lon: 77.2, accuracy: 20 } }), h(), mk());
+      expect(res.status).toBe(422);
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 });
