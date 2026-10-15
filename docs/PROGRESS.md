@@ -22,6 +22,11 @@
 - `useGeolocation` hook and `LocationCheck` component on `/stays/[id]` with states: denied, unavailable, timeout, low accuracy, too far, ok.
 - Raw coordinates are not stored; only the distance result is returned.
 
+## M5 Speed test (done)
+- `src/lib/speedtest`: `SpeedTestEngine` interface, Cloudflare wrapper (`createCloudflareEngine`, results converted to Mbps/ms/% and AIM result logging disabled), pure progress helpers. `resolveEngine()` uses `window.__wifiSpeedTestEngine` when present so Playwright can inject a mock (`e2e/helpers.ts: mockSpeedEngine`).
+- UI: `SpeedTest` (spot picker, progress bar, live metrics) inside `StayMeasure`; locked until the GPS check passes.
+- Packet loss uses Cloudflare's public TURN server; if unavailable it is reported as 0 (not measured). Not exercised against the real Cloudflare endpoints from the build machine.
+
 ## Test results
 - Vitest: 5 files, 23 tests pass. ESLint and `tsc` clean. `next build` clean (no warnings).
 - Playwright (chromium, mocked geolocation): 8 pass (smoke removed from count: smoke, GPS ok/too far/low accuracy/denied, search, add stay, outside India).

@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useGeolocation } from "@/hooks/useGeolocation";
-import { evaluateLocation, MAX_ACCURACY_M, MAX_DISTANCE_M } from "@/lib/geo";
+import { evaluateLocation, MAX_ACCURACY_M, MAX_DISTANCE_M, type Fix } from "@/lib/geo";
 import type { Stay } from "@/lib/types";
 
 type Tone = "ok" | "warn" | "error";
@@ -13,7 +13,13 @@ const toneClass: Record<Tone, string> = {
   error: "border-red-600 bg-red-50 text-red-900",
 };
 
-export function LocationCheck({ stay }: { stay: Pick<Stay, "name" | "lat" | "lon"> }) {
+export function LocationCheck({
+  stay,
+  onVerified,
+}: {
+  stay: Pick<Stay, "name" | "lat" | "lon">;
+  onVerified?: (fix: Fix | null) => void;
+}) {
   const { state, request } = useGeolocation();
   const { lat, lon, name } = stay;
 
@@ -21,6 +27,11 @@ export function LocationCheck({ stay }: { stay: Pick<Stay, "name" | "lat" | "lon
     () => (state.status === "success" ? evaluateLocation({ lat, lon }, state.fix) : null),
     [state, lat, lon],
   );
+
+  const verifiedFix = result?.status === "ok" && state.status === "success" ? state.fix : null;
+  useEffect(() => {
+    onVerified?.(verifiedFix);
+  }, [verifiedFix, onVerified]);
 
   let message: { tone: Tone; text: string } | null = null;
   if (state.status === "denied")

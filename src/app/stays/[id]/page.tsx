@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getStore } from "@/lib/data";
-import { LocationCheck } from "@/components/LocationCheck";
+import { StayMeasure } from "@/components/StayMeasure";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +18,7 @@ export default async function StayPage({ params }: { params: Promise<{ id: strin
       <p className="text-slate-600">
         {stay.city}, {stay.state}
       </p>
-      <LocationCheck stay={{ name: stay.name, lat: stay.lat, lon: stay.lon }} />
+      <StayMeasure stay={{ id: stay.id, name: stay.name, lat: stay.lat, lon: stay.lon }} />
     </div>
   );
 }
