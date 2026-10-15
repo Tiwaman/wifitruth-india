@@ -69,6 +69,9 @@ export function createMemoryStore(opts: { filePath?: string; seed?: Stay[] } = {
       persist();
       return { ok: true, reading };
     },
+    async listReadings({ stayId } = {}) {
+      return data.readings.filter((r) => !stayId || r.stayId === stayId);
+    },
     async getAggregate(stayId) {
       const rs = data.readings.filter((r) => r.stayId === stayId);
       return {

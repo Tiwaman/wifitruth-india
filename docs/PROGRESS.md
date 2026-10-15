@@ -27,6 +27,12 @@
 - UI: `SpeedTest` (spot picker, progress bar, live metrics) inside `StayMeasure`; locked until the GPS check passes.
 - Packet loss uses Cloudflare's public TURN server; if unavailable it is reported as 0 (not measured). Not exercised against the real Cloudflare endpoints from the build machine.
 
+## M6 Submission API (done)
+- `POST /api/readings` (thin route) -> `src/lib/submit-reading.ts` (dependency-injected, unit tested): IP rate limit (20 / 10 min) before parsing, device rate limit (8 / 10 min) after parsing, body parsing and sanity limits (`src/lib/readings.ts`), stay lookup, server re-validation via `validateLocationServer`, insert. Stored: salted SHA-256 of device id and IP, distance in metres, spot, values. No raw coordinates.
+- One reading per device per stay per day (day = IST calendar day) enforced by the store (unique constraint in Supabase). Friendly messages with stable `code` (`duplicate`, `rate_limited` + `Retry-After`, `too_far`, `low_accuracy`, etc.).
+- `HASH_SALT` required in production (503 `server_misconfigured` if missing); non-production uses a fixed non-secret dev salt. Rate limiters are in-memory per server instance (best effort on serverless).
+- `DataStore.listReadings` added (memory + Supabase). Client device id lives in localStorage (`src/lib/device-id.ts`). `StayMeasure` has the submit step. Playwright uses `DATA_FILE=.data/e2e.json` so tests do not touch dev data.
+
 ## Test results
 - Vitest: 5 files, 23 tests pass. ESLint and `tsc` clean. `next build` clean (no warnings).
 - Playwright (chromium, mocked geolocation): 8 pass (smoke removed from count: smoke, GPS ok/too far/low accuracy/denied, search, add stay, outside India).

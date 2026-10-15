@@ -101,6 +101,10 @@ export function createSupabaseStore(url: string, serviceKey: string): DataStore 
       if (!res.ok) throw new Error(`Supabase error ${res.status}`);
       return { ok: true, reading: toReading(((await res.json()) as Row[])[0]) };
     },
+    async listReadings({ stayId } = {}) {
+      const filter = stayId ? `&stay_id=eq.${encodeURIComponent(stayId)}` : "";
+      return (await rows(`readings?select=*&order=created_at.desc&limit=5000${filter}`)).map(toReading);
+    },
     async getAggregate(stayId): Promise<StayAggregate> {
       const r = (await rows(`stay_aggregates?select=*&stay_id=eq.${encodeURIComponent(stayId)}&limit=1`))[0];
       const n = (v: unknown) => (v == null ? null : Number(v));

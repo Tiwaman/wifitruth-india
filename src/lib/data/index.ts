@@ -14,7 +14,7 @@ export function getStore(): DataStore {
     g.__wifiStore =
       url && key
         ? createSupabaseStore(url, key)
-        : createMemoryStore({ filePath: path.join(process.cwd(), ".data", "db.json") });
+        : createMemoryStore({ filePath: process.env.DATA_FILE || path.join(process.cwd(), ".data", "db.json") });
   }
   return g.__wifiStore;
 }

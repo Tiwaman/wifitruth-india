@@ -9,6 +9,7 @@ export interface DataStore {
   createStay(input: NewStay): Promise<Stay>;
   insertReading(input: NewReading): Promise<InsertReadingResult>;
   getAggregate(stayId: string): Promise<StayAggregate>;
+  listReadings(opts?: { stayId?: string }): Promise<Reading[]>;
 }
 
 export function median(values: number[]): number | null {
