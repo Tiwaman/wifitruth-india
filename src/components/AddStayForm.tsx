@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { CrosshairIcon } from "@/components/icons";
+import { Button, inputClass, Notice } from "@/components/ui";
 import { KIND_LABEL, LODGING_KINDS } from "@/lib/lodging";
 import type { Stay } from "@/lib/types";
 
@@ -59,16 +61,16 @@ export function AddStayForm({ initialName = "" }: { initialName?: string }) {
     router.push(`/log?stay=${json.stay.id}`);
   }
 
-  const input = "w-full rounded border border-slate-400 p-2 bg-white";
+  const input = inputClass;
   return (
-    <form onSubmit={onSubmit} className="space-y-3 rounded-xl border border-slate-200 bg-white p-4">
-      <h2 className="font-semibold">Add a missing stay</h2>
-      <p className="text-sm text-slate-700">Only places to sleep can be added: hotels, hostels, guesthouses, homestays and resorts.</p>
-      <label className="block text-sm">
+    <form onSubmit={onSubmit} className="space-y-4 rounded-3xl border border-dashed border-ocean-300 bg-ocean-50/50 p-4 sm:p-5">
+      <h3 className="font-display text-lg font-semibold">Add a missing stay</h3>
+      <p className="text-sm text-ink-soft">Only places to sleep can be added: hotels, hostels, guesthouses, homestays and resorts.</p>
+      <label className="block text-sm font-semibold text-ink [&>input]:mt-1 [&>select]:mt-1 [&>input]:font-normal [&>select]:font-normal">
         Name
         <input name="name" required defaultValue={initialName} className={input} />
       </label>
-      <label className="block text-sm">
+      <label className="block text-sm font-semibold text-ink [&>input]:mt-1 [&>select]:mt-1 [&>input]:font-normal [&>select]:font-normal">
         Type
         <select name="kind" required defaultValue="" className={input}>
           <option value="" disabled>
@@ -81,54 +83,50 @@ export function AddStayForm({ initialName = "" }: { initialName?: string }) {
           ))}
         </select>
       </label>
-      <div className="grid grid-cols-2 gap-3">
-        <label className="block text-sm">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <label className="block text-sm font-semibold text-ink [&>input]:mt-1 [&>select]:mt-1 [&>input]:font-normal [&>select]:font-normal">
           City
           <input name="city" required className={input} />
         </label>
-        <label className="block text-sm">
+        <label className="block text-sm font-semibold text-ink [&>input]:mt-1 [&>select]:mt-1 [&>input]:font-normal [&>select]:font-normal">
           State
           <input name="state" required className={input} />
         </label>
-        <label className="block text-sm">
+        <label className="block text-sm font-semibold text-ink [&>input]:mt-1 [&>select]:mt-1 [&>input]:font-normal [&>select]:font-normal">
           Latitude
           <input name="lat" type="number" step="any" required value={lat} onChange={(e) => setLat(e.target.value)} className={input} />
         </label>
-        <label className="block text-sm">
+        <label className="block text-sm font-semibold text-ink [&>input]:mt-1 [&>select]:mt-1 [&>input]:font-normal [&>select]:font-normal">
           Longitude
           <input name="lon" type="number" step="any" required value={lon} onChange={(e) => setLon(e.target.value)} className={input} />
         </label>
       </div>
       <div className="space-y-1">
-        <button
-          type="button"
-          onClick={useMyLocation}
-          disabled={locating}
-          className="rounded-lg border border-slate-400 bg-white px-3 py-2 text-sm font-medium hover:bg-slate-50 disabled:opacity-60"
-        >
+        <Button variant="outline" onClick={useMyLocation} disabled={locating}>
+          <CrosshairIcon className="h-4 w-4" />
           {locating ? "Finding you..." : "Use my current location"}
-        </button>
-        <p className="text-xs text-slate-700">Best used while you are at the stay. Or right-click the place in a maps app to copy its coordinates.</p>
+        </Button>
+        <p className="text-xs text-ink-soft">Best used while you are at the stay. Or right-click the place in a maps app to copy its coordinates.</p>
       </div>
       <label className="flex items-start gap-2 text-sm">
-        <input name="confirmLodging" type="checkbox" required className="mt-1" />
+        <input name="confirmLodging" type="checkbox" required className="mt-1 h-5 w-5 shrink-0 accent-ocean-700" />
         <span>This is a place to sleep (hotel, hostel, guesthouse, homestay or resort).</span>
       </label>
       {error && (
-        <p role="alert" className="text-sm text-red-700">
+        <Notice tone="error" role="alert">
           {error}
-        </p>
+        </Notice>
       )}
       {existing && (
         <p className="text-sm">
-          <Link href={`/log?stay=${existing.id}`} className="text-blue-800 underline">
+          <Link href={`/log?stay=${existing.id}`} className="font-semibold text-ocean-800 underline underline-offset-4">
             Use {existing.name} ({existing.city}) instead
           </Link>
         </p>
       )}
-      <button disabled={busy} className="rounded-lg bg-blue-700 px-4 py-2 font-medium text-white hover:bg-blue-800 disabled:opacity-60">
+      <Button type="submit" disabled={busy} variant="dark">
         {busy ? "Adding..." : "Add stay"}
-      </button>
+      </Button>
     </form>
   );
 }

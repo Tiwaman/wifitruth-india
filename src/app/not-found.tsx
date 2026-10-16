@@ -1,13 +1,13 @@
-import Link from "next/link";
+import { EmptyState } from "@/components/EmptyState";
+import { Container } from "@/components/ui";
 
 export default function NotFound() {
   return (
-    <div className="space-y-3 rounded-xl border border-slate-300 bg-white p-6" data-testid="not-found">
-      <h1 className="text-xl font-semibold">We could not find that page</h1>
-      <p className="text-slate-700">The stay may have been removed or the link is wrong.</p>
-      <Link href="/" className="inline-block text-blue-800 underline">
-        Search for a stay
-      </Link>
-    </div>
+    <Container className="py-14 sm:py-20">
+      <div data-testid="not-found" className="space-y-5 text-center">
+        <h1 className="font-display text-3xl font-bold sm:text-4xl">We could not find that page</h1>
+        <EmptyState title="Looks like this trail goes nowhere" text="The stay may have been removed or the link is wrong." cta={{ href: "/", label: "Search for a stay" }} />
+      </div>
+    </Container>
   );
 }

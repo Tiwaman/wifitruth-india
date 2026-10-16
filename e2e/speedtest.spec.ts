@@ -11,7 +11,7 @@ test("speed test is locked until location is verified, then runs with mocked eng
   await expect(page.getByRole("button", { name: /start speed test/i })).toBeDisabled();
   await page.getByRole("button", { name: /verify/i }).click();
   await expect(page.getByTestId("location-message")).toHaveAttribute("data-status", "ok");
-  await page.getByLabel(/where are you testing/i).selectOption("rooftop");
+  await page.getByRole("radio", { name: "Rooftop" }).check();
   await page.getByRole("button", { name: /start speed test/i }).click();
   await expect(page.getByTestId("metric-download")).toContainText("42.5");
   await expect(page.getByTestId("metric-packet-loss")).toContainText("0.5");

@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { SpeedGauge } from "@/components/SpeedGauge";
+import { SpotPicker } from "@/components/SpotPicker";
+import { Button, Notice } from "@/components/ui";
 import { resolveEngine } from "@/lib/speedtest/cloudflare";
 import type { SpeedProgress, SpeedResult } from "@/lib/speedtest/types";
-import { SPOTS, type Spot } from "@/lib/types";
-import { SPOT_LABELS } from "@/lib/spots";
+import type { Spot } from "@/lib/types";
 
 const PHASE_LABEL = {
   latency: "Measuring latency",
@@ -16,11 +18,11 @@ const PHASE_LABEL = {
 
 export function Metric({ label, value, unit }: { label: string; value: number | undefined; unit: string }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-3">
-      <dt className="text-xs font-medium uppercase tracking-wide text-slate-600">{label}</dt>
-      <dd className="mt-1 text-xl font-semibold tabular-nums" data-testid={`metric-${label.toLowerCase().replace(/\s+/g, "-")}`}>
+    <div className="rounded-2xl bg-ocean-50 p-3">
+      <dt className="text-xs font-bold uppercase tracking-wider text-ocean-800">{label}</dt>
+      <dd className="mt-1 font-display text-2xl font-bold tabular-nums text-ink" data-testid={`metric-${label.toLowerCase().replace(/\s+/g, "-")}`}>
         {value === undefined ? "-" : value}
-        <span className="ml-1 text-sm font-normal text-slate-600">{unit}</span>
+        <span className="ml-1 text-sm font-medium text-ink-soft">{unit}</span>
       </dd>
     </div>
   );
@@ -72,61 +74,28 @@ export function SpeedTest({
   }
 
   const shown = result ?? progress?.partial ?? {};
+  const caption = running && progress ? `${PHASE_LABEL[progress.phase]}...` : result ? "Download speed" : "Ready when you are";
   return (
-    <section className="space-y-4 rounded-xl border border-slate-200 bg-white p-4" aria-labelledby="speedtest-heading">
-      <h2 id="speedtest-heading" className="text-lg font-semibold">
-        2. Run the speed test
-      </h2>
+    <div className="space-y-5">
       {!enabled && (
-        <p className="text-sm text-slate-700" data-testid="speedtest-locked">
+        <Notice tone="info" data-testid="speedtest-locked">
           Confirm your location first. The speed test unlocks once you are at the stay.
-        </p>
+        </Notice>
       )}
-      <div>
-        <label htmlFor="spot" className="block text-sm font-medium">
-          Where are you testing?
-        </label>
-        <select
-          id="spot"
-          value={spot}
-          onChange={(e) => onSpotChange(e.target.value as Spot)}
-          disabled={!enabled || running}
-          className="mt-1 w-full rounded-lg border border-slate-400 bg-white px-3 py-2 disabled:bg-slate-100"
-        >
-          {SPOTS.map((s) => (
-            <option key={s} value={s}>
-              {SPOT_LABELS[s]}
-            </option>
-          ))}
-        </select>
-      </div>
-      <button
-        type="button"
-        onClick={start}
-        disabled={!enabled || running}
-        className="w-full rounded-lg bg-blue-700 px-4 py-3 font-medium text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-slate-400 sm:w-auto"
-      >
-        {running ? "Testing..." : result ? "Run again" : "Start speed test"}
-      </button>
-      {running && progress && (
-        <div aria-live="polite">
-          <p className="text-sm text-slate-700">{PHASE_LABEL[progress.phase]}... keep this tab open.</p>
-          <div
-            role="progressbar"
-            aria-label="Speed test progress"
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={progress.percent}
-            className="mt-2 h-2 overflow-hidden rounded-full bg-slate-200"
-          >
-            <div className="h-full bg-blue-700 transition-all" style={{ width: `${Math.max(progress.percent, 4)}%` }} />
-          </div>
+      <SpotPicker value={spot} onChange={onSpotChange} disabled={!enabled || running} />
+      <div className="rounded-3xl bg-gradient-to-b from-ocean-50 to-sand-50 px-3 py-5 ring-1 ring-ocean-100">
+        <SpeedGauge value={shown.downloadMbps} running={running} percent={progress?.percent ?? 0} caption={caption} />
+        <div aria-live="polite" className="mt-3 text-center text-sm text-ink-soft">
+          {running && progress ? `${PHASE_LABEL[progress.phase]}... keep this tab open.` : null}
         </div>
-      )}
+      </div>
+      <Button onClick={start} disabled={!enabled || running} size="lg" className="w-full sm:w-auto">
+        {running ? "Testing..." : result ? "Run again" : "Start speed test"}
+      </Button>
       {error && (
-        <p role="alert" className="rounded border-l-4 border-red-600 bg-red-50 p-3 text-sm text-red-900">
+        <Notice tone="error" role="alert">
           {error}
-        </p>
+        </Notice>
       )}
       {(running || result) && (
         <dl className="grid grid-cols-2 gap-3 sm:grid-cols-5" data-testid="speed-metrics">
@@ -137,6 +106,6 @@ export function SpeedTest({
           <Metric label="Packet loss" value={shown.packetLoss} unit="%" />
         </dl>
       )}
-    </section>
+    </div>
   );
 }

@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
+import { CrosshairIcon } from "@/components/icons";
+import { Button } from "@/components/ui";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { evaluateLocation, MAX_ACCURACY_M, MAX_DISTANCE_M, type Fix } from "@/lib/geo";
 import type { Stay } from "@/lib/types";
@@ -8,9 +10,9 @@ import type { Stay } from "@/lib/types";
 type Tone = "ok" | "warn" | "error";
 
 const toneClass: Record<Tone, string> = {
-  ok: "border-green-600 bg-green-50 text-green-900",
-  warn: "border-yellow-600 bg-yellow-50 text-yellow-900",
-  error: "border-red-600 bg-red-50 text-red-900",
+  ok: "border-green-600 bg-green-50 text-green-950",
+  warn: "border-yellow-500 bg-yellow-50 text-yellow-950",
+  error: "border-red-600 bg-red-50 text-red-950",
 };
 
 export function LocationCheck({
@@ -61,20 +63,16 @@ export function LocationCheck({
   const busy = state.status === "requesting";
   return (
     <section className="space-y-3" aria-live="polite">
-      <button
-        type="button"
-        onClick={request}
-        disabled={busy}
-        className="rounded-lg bg-blue-700 px-4 py-2 font-medium text-white hover:bg-blue-800 disabled:opacity-60"
-      >
+      <Button onClick={request} disabled={busy} variant={verifiedFix ? "outline" : "dark"} size="lg" className="w-full sm:w-auto">
+        <CrosshairIcon className="h-5 w-5" />
         {busy ? "Getting your location..." : state.status === "idle" ? "Verify I am at this stay" : "Check again"}
-      </button>
+      </Button>
       {message && (
         <p
           role={message.tone === "ok" ? "status" : "alert"}
           data-testid="location-message"
           data-status={result?.status ?? state.status}
-          className={`rounded border-l-4 p-3 text-sm ${toneClass[message.tone]}`}
+          className={`rounded-2xl border-l-4 px-4 py-3 text-sm leading-relaxed ${toneClass[message.tone]}`}
         >
           {message.text}
         </p>

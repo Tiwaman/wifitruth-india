@@ -40,7 +40,7 @@ test("full flow: dashboard, stay detail, log deep link, GPS ok, speed test, pick
 
   await page.getByRole("button", { name: /verify/i }).click();
   await expect(page.getByTestId("location-message")).toHaveAttribute("data-status", "ok");
-  await page.getByLabel(/where are you testing/i).selectOption("rooftop");
+  await page.getByRole("radio", { name: "Rooftop" }).check();
   await page.getByRole("button", { name: /start speed test/i }).click();
   await expect(page.getByTestId("metric-download")).toContainText("42.5");
   await page.getByRole("button", { name: /submit reading/i }).click();

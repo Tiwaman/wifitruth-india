@@ -80,3 +80,16 @@
 - Shared styling lives in `src/components/ui.tsx` (Card, ButtonLink, Chip) and the existing BandBar/StayCard; measuring UI (`StayMeasure`) moved from the detail page to `LogFlow`. `StaySearch` renamed `StayPicker`. Test-mode flag (`NEXT_PUBLIC_SKIP_LOCATION_CHECK`) untouched and still handled in `StayMeasure`.
 - E2E: Playwright now also starts `e2e/stub-upstream.mjs` (port 3101) as a fake Photon/Nominatim that mixes lodging with cafes/cities/attractions, so the real normalizers are exercised without network. 46 e2e tests pass (was 35). Supabase env stays blanked.
 - Not done yet (later milestones): premium visual design, real hero artwork, stepper UI. Cleanup SQL for existing non-lodging rows is still to be documented (M5).
+
+## v2 M3 Design system and shell (done)
+- Tokens as CSS variables in `globals.css` mapped into the Tailwind 4 theme (ocean teal, coral/amber, sand surfaces, ink text). Fonts via `next/font/google` (self-hosted at build): Outfit for headings, Plus Jakarta Sans for body, with adjusted fallbacks to avoid layout shift.
+- Shell: sticky translucent `SiteHeader` (working mobile menu, Escape closes, aria-expanded), `SiteFooter` with wave pattern, `Logo` (wifi + pin), skip link, `.bg-topo` / `.bg-waves` inline-SVG textures, focus rings (amber on dark sections).
+- Components: `ui.tsx` (Container, Card, Button/ButtonLink, Chip, Notice), `icons.tsx` (inline SVG set, no new deps), `Scenery` (hero artwork: mountains, sun, sea, palm, dotted route, plane, pin), `WifiArcs`, `SpotIcon`/`KindIcon`, `EmptyState`. Animations (arc pulse, plane drift, pin bob) are disabled under `prefers-reduced-motion`.
+
+## v2 M4 Premium pages (done)
+- Dashboard: hero with search and CTAs, trust strip, pill filter toolbar, premium `StayCard` grid, how-it-works strip, closing CTA, illustrated empty state, shimmer skeleton in `loading.tsx`. BandBar redesigned (segmented, rounded, percentages; text always accompanies colour).
+- Stay detail: gradient banner with kind chip and band badge, big speed tiles, per-spot rows with icons and mini bars, "Latest tests" timeline, map card, single "Log speed here" link that is a fixed bottom bar on mobile and sits in the banner on desktop.
+- Log flow: 4-step `Stepper`, `StepCard` states (locked/active/done), `SpeedGauge` with live phase and progress, icon-chip `SpotPicker` (native radio group; e2e now uses `getByRole("radio", { name: "Rooftop" })`), celebratory success card with "See results" and "Test another spot", styled test-mode banner.
+- Screenshots: `node e2e/shots.mjs` (own servers on 3101/3200, do not run with e2e) writes desktop 1280 and mobile 390 PNGs to `.shots/` (git-ignored); no horizontal overflow on any captured page.
+- Fixed from axe: coral text contrast, nested div inside `dl`.
+- Gates: eslint, tsc, `next build` clean; Vitest 167 pass; Playwright 46 pass.

@@ -1,14 +1,230 @@
 @import "tailwindcss";
 @import "leaflet/dist/leaflet.css";
 
+/* "Wanderlust" design tokens. Ink on sand/white keeps AA contrast; band colours stay semantic red/yellow/green. */
+:root {
+  --ocean-950: #04242c;
+  --ocean-900: #073b46;
+  --ocean-800: #0a4f5c;
+  --ocean-700: #0d6473;
+  --ocean-600: #107a8b;
+  --ocean-500: #1796a8;
+  --ocean-300: #7fd0da;
+  --ocean-100: #d5f0f3;
+  --ocean-50: #eefafb;
+  --coral-600: #b53a1f;
+  --coral-500: #ff6b4a;
+  --coral-400: #ff875f;
+  --amber-400: #ffc65c;
+  --amber-300: #ffd98a;
+  --sand-50: #fffdf9;
+  --sand-100: #fbf7f1;
+  --sand-200: #f3ebdf;
+  --sand-300: #e6d9c5;
+  --ink: #10262b;
+  --ink-soft: #3d5258;
+}
+
+@theme inline {
+  --color-ocean-950: var(--ocean-950);
+  --color-ocean-900: var(--ocean-900);
+  --color-ocean-800: var(--ocean-800);
+  --color-ocean-700: var(--ocean-700);
+  --color-ocean-600: var(--ocean-600);
+  --color-ocean-500: var(--ocean-500);
+  --color-ocean-300: var(--ocean-300);
+  --color-ocean-100: var(--ocean-100);
+  --color-ocean-50: var(--ocean-50);
+  --color-coral-600: var(--coral-600);
+  --color-coral-500: var(--coral-500);
+  --color-coral-400: var(--coral-400);
+  --color-amber-400: var(--amber-400);
+  --color-amber-300: var(--amber-300);
+  --color-sand-50: var(--sand-50);
+  --color-sand-100: var(--sand-100);
+  --color-sand-200: var(--sand-200);
+  --color-sand-300: var(--sand-300);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --font-display: var(--font-display), ui-rounded, "Segoe UI", system-ui, sans-serif;
+  --font-sans: var(--font-body), ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+  --shadow-card: 0 1px 2px rgb(16 38 43 / 0.06), 0 8px 24px -12px rgb(16 38 43 / 0.18);
+  --shadow-lift: 0 2px 4px rgb(16 38 43 / 0.06), 0 18px 36px -14px rgb(16 38 43 / 0.28);
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
+}
+
+body {
+  background: var(--sand-100);
+  color: var(--ink);
+}
+
 :focus-visible {
-  outline: 2px solid #1d4ed8;
+  outline: 3px solid var(--ocean-600);
   outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.on-dark :focus-visible {
+  outline-color: var(--amber-300);
+}
+
+/* Subtle topographic / wifi-wave texture for section backgrounds (inline SVG, no request). */
+.bg-topo {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240' viewBox='0 0 240 240' fill='none' stroke='%230d6473' stroke-opacity='0.09' stroke-width='1.2'%3E%3Cpath d='M-10 60c40-30 80 20 120-6s70-30 130 4'/%3E%3Cpath d='M-10 90c40-30 80 20 120-6s70-30 130 4'/%3E%3Cpath d='M-10 120c40-30 80 20 120-6s70-30 130 4'/%3E%3Cpath d='M-10 150c40-30 80 20 120-6s70-30 130 4'/%3E%3Cpath d='M-10 180c40-30 80 20 120-6s70-30 130 4'/%3E%3Cpath d='M-10 210c40-30 80 20 120-6s70-30 130 4'/%3E%3C/svg%3E");
+  background-size: 240px 240px;
+}
+
+.bg-waves {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120' fill='none' stroke='%23ffffff' stroke-opacity='0.07' stroke-width='1.5' stroke-linecap='round'%3E%3Cpath d='M30 70a30 30 0 0 1 60 0'/%3E%3Cpath d='M40 70a20 20 0 0 1 40 0'/%3E%3Cpath d='M50 70a10 10 0 0 1 20 0'/%3E%3C/svg%3E");
+  background-size: 120px 120px;
+}
+
+@keyframes arc-pulse {
+  0%,
+  100% {
+    opacity: 0.15;
+  }
+  40% {
+    opacity: 1;
+  }
+}
+
+@keyframes plane-drift {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate(18px, -9px) rotate(-3deg);
+  }
+}
+
+@keyframes pin-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes sun-glow {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes confetti {
+  0% {
+    transform: translateY(-6px) rotate(0deg);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(46px) rotate(220deg);
+    opacity: 0;
+  }
+}
+
+@keyframes needle-scan {
+  0%,
+  100% {
+    transform: rotate(-90deg);
+  }
+  50% {
+    transform: rotate(40deg);
+  }
+}
+
+.arc-1,
+.arc-2,
+.arc-3 {
+  animation: arc-pulse 2.8s ease-in-out infinite;
+}
+.arc-2 {
+  animation-delay: 0.35s;
+}
+.arc-3 {
+  animation-delay: 0.7s;
+}
+.anim-plane {
+  animation: plane-drift 9s ease-in-out infinite;
+  transform-box: fill-box;
+}
+.anim-pin {
+  animation: pin-bob 3.4s ease-in-out infinite;
+  transform-box: fill-box;
+}
+.anim-sun {
+  animation: sun-glow 6s ease-in-out infinite;
+}
+.anim-pop {
+  animation: pop 0.55s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+.anim-confetti {
+  animation: confetti 1.6s ease-out both;
+}
+.anim-scan {
+  transform-origin: 100px 100px;
+  animation: needle-scan 1.6s ease-in-out infinite;
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--sand-200) 25%, var(--sand-50) 50%, var(--sand-200) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+
+/* Leaflet sits under the sticky header. */
+.leaflet-container {
+  z-index: 0;
+  font-family: inherit;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  * {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
     transition: none !important;
     animation: none !important;
+  }
+  .arc-1,
+  .arc-2,
+  .arc-3 {
+    opacity: 0.85;
   }
 }

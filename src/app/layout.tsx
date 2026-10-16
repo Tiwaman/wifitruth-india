@@ -1,7 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import Link from "next/link";
+import { Outfit, Plus_Jakarta_Sans } from "next/font/google";
+import { SiteFooter } from "@/components/SiteFooter";
+import { SiteHeader } from "@/components/SiteHeader";
 import { getSiteUrl } from "@/lib/site";
 import "./globals.css";
+
+const display = Outfit({ subsets: ["latin"], variable: "--font-display", display: "swap", adjustFontFallback: true });
+const body = Plus_Jakarta_Sans({ subsets: ["latin"], variable: "--font-body", display: "swap", adjustFontFallback: true });
 
 const description =
   "Real WiFi speeds at hostels, hotels and homestays across India, measured on the spot by travellers and verified by GPS.";
@@ -15,47 +20,21 @@ export const metadata: Metadata = {
   twitter: { card: "summary", title: "WiFiTruth India", description },
 };
 
-export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#1d4ed8" };
+export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#073b46" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body className="min-h-screen bg-slate-50 text-slate-900 antialiased">
+    <html lang="en" data-scroll-behavior="smooth" className={`${display.variable} ${body.variable}`}>
+      <body className="min-h-screen bg-sand-100 font-sans text-ink antialiased">
         <a
           href="#main"
-          className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded focus:bg-white focus:px-3 focus:py-2 focus:text-blue-800"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:rounded-full focus:bg-sand-50 focus:px-4 focus:py-2 focus:font-semibold focus:text-ocean-900 focus:shadow-lift"
         >
           Skip to content
         </a>
-        <header className="border-b border-slate-200 bg-white">
-          <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3">
-            <Link href="/" className="text-lg font-bold text-blue-800">
-              WiFiTruth India
-            </Link>
-            <nav aria-label="Main" className="flex gap-4 text-sm text-slate-700">
-              <Link href="/" className="underline">
-                Stays
-              </Link>
-              <Link href="/log" className="underline">
-                Log speed
-              </Link>
-              <Link href="/privacy" className="underline">
-                Privacy
-              </Link>
-            </nav>
-          </div>
-        </header>
-        <main id="main" className="mx-auto max-w-3xl px-4 py-6">
-          {children}
-        </main>
-        <footer className="mx-auto max-w-3xl px-4 pb-10 text-xs text-slate-600">
-          <p>
-            Readings are anonymous. We never store your exact location, only whether you were within range of the stay.{" "}
-            <Link href="/privacy" className="underline">
-              Privacy details
-            </Link>
-          </p>
-        </footer>
+        <SiteHeader />
+        <main id="main">{children}</main>
+        <SiteFooter />
       </body>
     </html>
   );
