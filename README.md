@@ -1,10 +1,33 @@
 # WiFiTruth India
 
-Crowd-measured WiFi quality for hostels, hotels and homestays in India. Travellers search a stay, confirm by GPS that they are really there, run a speed test in the browser, pick where they tested (room, rooftop, reception...) and submit anonymously. Each stay page shows median download, upload and latency, a red / yellow / green bar with the percentage of readings in each band, a per-spot breakdown, the sample count and a confidence label.
+Crowd-measured WiFi quality for hostels, hotels and homestays in India. Travellers search a stay, confirm by GPS that they are really there, run a speed test in the browser, pick where they tested (room, rooftop, reception...) and submit anonymously. The home page is a dashboard of all tracked stays; each stay page shows median download, upload and latency, a red / yellow / green bar with the percentage of readings in each band, a per-spot breakdown, the sample count and a confidence label.
 
 - Stack: Next.js 16 (App Router), TypeScript, Tailwind 4, Leaflet + OpenStreetMap, `@cloudflare/speedtest`, Supabase Postgres (optional), Vitest, Playwright.
 - No login. A random device id (kept in localStorage) and the IP are stored only as salted SHA-256 hashes. Raw GPS coordinates are never stored or logged; only the distance to the stay is kept.
 - Without Supabase credentials the app runs on a local JSON file (`.data/db.json`) seeded with 15 sample stays, so you can try everything locally.
+
+## Pages
+
+| Path | What it is |
+|---|---|
+| `/` | Dashboard: hero with a "Log internet speed" call to action, search, state filter and sort (best speed, most tested, recently tested) over all tracked stays. Each card shows median download, the red / yellow / green bar, test count and last tested. Filters are a plain GET form (`?q=&state=&sort=`). |
+| `/stays/[id]` | Read-only stay detail: median download, upload and latency, band bar, per-spot breakdown, map, and the "Latest tests" trail. "Log speed here" links to `/log?stay=<id>`. |
+| `/log` | The log flow as a 4-step stepper: choose a stay (lodging-only search, add a missing one, or deep link `?stay=<id>`), confirm location, run the speed test and pick the spot, submit. |
+| `/privacy` | What is and is not stored. |
+
+Speed tests can only be submitted from `/log`; stay pages never run a test.
+
+## Lodging only
+
+Only places to sleep can be chosen or added. Map search results are filtered to OSM `tourism` = hotel, motel, hostel, guest_house, apartment, chalet, resort, camp_site, alpine_hut, wilderness_hut, or `leisure=resort`; cities, cafes, shops and attractions are dropped (`src/lib/lodging.ts`). Adding a missing stay requires a lodging type (hotel, hostel, guesthouse, homestay, resort), a name, coordinates (with a "use my current location" helper) and an explicit "this is a place to sleep" confirmation. The server enforces the same rules, plus the India bounding box and a near-duplicate check (same name within 200 m returns 409). The kind `other` is only accepted for camp sites and huts that come from map search. Rows from before this rule are not removed automatically, see [Cleaning up data](#cleaning-up-data).
+
+## Recent entries trail
+
+`GET /api/stays/[id]/readings?limit=` (default 10, max 50) powers the "Latest tests" timeline on the stay page. It exposes only spot, download, upload, latency, jitter, band and time. Device and IP hashes and the distance are never returned.
+
+## Design system
+
+A "Wanderlust" look: ocean teal to sunset coral/amber, sand surfaces, soft cards. Tokens are CSS variables in `src/app/globals.css` mapped into the Tailwind 4 theme; fonts are Outfit (headings) and Plus Jakarta Sans (body) via `next/font`. Building blocks live in `src/components`: `ui.tsx` (Container, Card, Button, Chip, Notice), `icons.tsx` (inline SVG, no icon dependency), `Scenery` and `WifiArcs` (hero artwork), `BandBar`, `Stepper`, `SpeedGauge`, `SpotPicker`. All artwork is inline SVG, with no external images. Animations are switched off under `prefers-reduced-motion`. Band colours always come with text and percentages.
 
 ## Rules and bands
 
@@ -35,7 +58,11 @@ npx playwright install chromium   # once
 npm run test:e2e       # Playwright (chromium)
 ```
 
-The e2e suite starts its own dev server on port 3100 with an isolated data file (`.data/e2e.json`, wiped at start) and high rate limits. Geolocation, the speed test engine (`window.__wifiSpeedTestEngine`), OpenStreetMap tiles and Photon search are mocked, so it needs no network. It covers the full submit flow with aggregate and band-bar updates, GPS denied / too far / low accuracy, duplicate and rate-limit messages, adding a missing stay, out-of-India rejection, a mobile viewport flow, axe accessibility checks (home and stay pages), XSS, input validation and header checks.
+The e2e suite starts its own dev server on port 3100 and a stub Photon/Nominatim on port 3101 (`e2e/stub-upstream.mjs`), with an isolated data file (`.data/e2e.json`, wiped at start) and high rate limits. Stop any running `next dev` first. Geolocation, the speed test engine (`window.__wifiSpeedTestEngine`) and OpenStreetMap tiles are mocked, so it needs no network. It covers dashboard to detail to log to submit with the trail updating, lodging-only enforcement, GPS denied / too far / low accuracy, duplicate and rate-limit messages, adding a missing stay, out-of-India rejection, mobile viewport flows, axe accessibility checks, XSS, input validation and header checks. Test mode (below) is covered by unit tests only, because it is inlined at build time and would need a second server.
+
+**e2e never uses Supabase.** The Playwright config blanks `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` for its server, so even with real credentials in `.env.local` the tests write only to the local JSON file.
+
+Screenshots for visual review: `node e2e/shots.mjs` starts its own servers (ports 3101 and 3200; do not run it together with the e2e suite) and writes desktop (1280) and mobile (390) PNGs to `.shots/` (git-ignored).
 
 ## Environment variables
 
@@ -46,8 +73,11 @@ The e2e suite starts its own dev server on port 3100 with an isolated data file 
 | `HASH_SALT` | production | Secret used to hash device ids and IPs. At least 16 characters, long and random. In production the app refuses submissions (503) if it is missing or short. Do not change it later unless you accept that "one reading per day" resets. |
 | `NEXT_PUBLIC_SITE_URL` | recommended | Public origin (e.g. `https://wifitruth.vercel.app`) for canonical URLs, Open Graph and the sitemap. Falls back to Vercel's production URL, then `http://localhost:3000`. |
 | `DATA_FILE` | no | Path of the local JSON data file (default `.data/db.json`). Ignored when Supabase is configured. |
-| `NEXT_PUBLIC_SKIP_LOCATION_CHECK` | no | TESTING ONLY. Set to `true` to skip the GPS check and allow repeat tests. Leave unset for real use. Requires a redeploy to change. |
+| `NEXT_PUBLIC_SKIP_LOCATION_CHECK` | no | TESTING ONLY (test mode). Exactly `true` turns off the GPS check on the client and the server and makes every submission count as a new device, so anyone can rate any stay from anywhere and repeat tests are allowed. A "Test mode" banner replaces the location step on `/log`. Leave unset for real use. It is inlined at build time, so changing it needs a rebuild/redeploy. |
+| `PHOTON_BASE_URL`, `NOMINATIM_BASE_URL` | no | Override the search upstreams (default: the public Photon and Nominatim servers). Used by e2e to point at a local stub. |
 | `RATE_LIMIT_IP_MAX`, `RATE_LIMIT_DEVICE_MAX`, `RATE_LIMIT_STAY_MAX` | no | Per 10 minutes limits for submissions per IP (20), per device (8) and new stays per IP (10). |
+
+> **WARNING: turn test mode off before launch.** Make sure `NEXT_PUBLIC_SKIP_LOCATION_CHECK` is unset (or not `true`) in every Vercel environment you make public, then redeploy. While it is on, the data cannot be trusted.
 
 Generate a salt, for example: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`.
 
@@ -69,6 +99,17 @@ Security model: `readings` has row level security on and no policy, and anon/aut
 
 Alternative with the Supabase CLI: `supabase link --project-ref YOUR-REF` then `supabase db push` (migration) and run `supabase/seed.sql` in the SQL editor.
 
+## Cleaning up data
+
+v2 only allows lodging, but rows added earlier (or by tests) may include non-lodging places or junk. `supabase/cleanup-non-lodging.sql` helps remove them:
+
+1. Open the Supabase **SQL Editor**, paste the file and run it. Part 1 is a read-only `SELECT` listing suspicious stays with a `reason`: names starting with "E2E", names or cities containing `<`, `>` or "script", and stays of kind `other` with no OSM reference whose name is just their city or state.
+2. Read every row. The list is deliberately conservative, so also skim your stays for anything else that is not a place to sleep.
+3. To delete, uncomment one of the two `DELETE` statements at the bottom (by explicit id is safest), edit the ids if needed, and run it. Deleting a stay also deletes its readings. There is no undo, so take a backup first.
+4. Re-run Part 1 to confirm.
+
+The 15 seed stays (ids `00000000-0000-4000-8000-0000000000NN`) are excluded from both the list and the deletes. With the `DELETE` commented out the script changes nothing, so it is safe to re-run. It has not been run against a live Postgres here; the static test `src/lib/cleanup-sql.test.ts` only checks that it has no live writes and protects the seed ids.
+
 ## Deploy to Vercel
 
 1. Push this repository to GitHub (your own account).
@@ -87,7 +128,7 @@ Alternative with the Supabase CLI: `supabase link --project-ref YOUR-REF` then `
 - India check is a bounding box (lat 6.7 to 35.7, lon 68.1 to 97.4). It rejects the rest of the world but still accepts places in neighbouring countries inside the box (Nepal, Bhutan, Bangladesh, Sri Lanka's north, parts of Pakistan and Myanmar).
 - Rate limiters are in memory per server instance. On Vercel (serverless) they are best effort; the hard guarantees are the per-day uniqueness constraint in the database and the GPS gates. `X-Forwarded-For` is trusted as set by Vercel.
 - GPS validation is client-reported: a determined person can send fake coordinates to the API. Server re-validation stops accidents and casual abuse, not a targeted spoof.
-- Anyone can add a stay (rate limited, validated, shown as plain text). There is no moderation queue, so duplicate or junk stays can appear.
+- Anyone can add a stay (rate limited, validated, lodging type and confirmation required, shown as plain text). The lodging rule is self-declared and there is no moderation queue, so duplicate or junk stays can still appear.
 - Photon (OSM) search and the Cloudflare speed test depend on third-party endpoints. Packet loss relies on Cloudflare's public TURN server and shows 0 if unavailable. Neither was exercised against the live services in automated tests (mocked).
 - Aggregation reads up to the latest readings per stay in app code (Supabase REST caps a response at 1000 rows by default), which is fine for early traffic; move recency weighting into SQL when volume grows.
 - The SQL migration was reviewed carefully and checked by static tests but not executed on a live Postgres in this repository's test run. Run it on a fresh Supabase project first.

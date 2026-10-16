@@ -93,3 +93,9 @@
 - Screenshots: `node e2e/shots.mjs` (own servers on 3101/3200, do not run with e2e) writes desktop 1280 and mobile 390 PNGs to `.shots/` (git-ignored); no horizontal overflow on any captured page.
 - Fixed from axe: coral text contrast, nested div inside `dl`.
 - Gates: eslint, tsc, `next build` clean; Vitest 167 pass; Playwright 46 pass.
+
+## v2 M5 QA and docs (done)
+- `supabase/cleanup-non-lodging.sql`: read-only SELECT of candidates (E2E names, `<`/`>`/"script" in name or city, kind `other` with no OSM ref whose name equals city/state) with a `reason` column; two commented-out DELETEs (by id, or everything listed). Seed ids (`00000000-0000-4000-8000-0000000000NN`) are excluded everywhere. Not executed on a live Postgres; static test `src/lib/cleanup-sql.test.ts` checks no live writes and seed protection.
+- README refreshed: pages, lodging-only rule, trail API, design system, test mode and a WARNING to switch it off before launch, e2e never uses Supabase, `node e2e/shots.mjs`, "Cleaning up data". Vercel steps unchanged.
+- Tests added: `src/lib/test-mode.test.ts`, `src/lib/cleanup-sql.test.ts`, e2e mobile menu -> /log. The test-mode flag is covered by unit tests only (it is inlined at build time and a second `next dev` in the same directory is not clean); the full mobile dashboard -> detail -> log -> submit e2e already existed.
+- Gate: eslint, tsc, `next build` clean; Vitest 19 files / 172 tests; Playwright 47 pass, run twice consecutively. No dev servers left on 3100/3101/3200. Nothing pushed.

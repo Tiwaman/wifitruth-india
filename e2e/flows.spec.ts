@@ -204,4 +204,12 @@ test.describe("mobile viewport", () => {
     await expect(page.getByTestId("sample-count")).toHaveText("1 reading");
     expect(await overflow()).toBe(false);
   });
+
+  test("mobile menu opens and leads to the log page", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("button", { name: "Open menu" }).tap();
+    await page.getByRole("navigation", { name: "Mobile" }).getByRole("link", { name: "Log speed" }).tap();
+    await expect(page).toHaveURL(/\/log$/);
+    await expect(page.getByTestId("choose-stay")).toBeVisible();
+  });
 });
