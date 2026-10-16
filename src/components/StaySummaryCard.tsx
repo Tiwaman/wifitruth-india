@@ -27,7 +27,7 @@ export function StaySummaryCard({ summary }: { summary: StaySummary }) {
           No readings yet
         </h2>
         <p className="mt-1 text-slate-700">
-          Be the first to test the WiFi here. Verify your location and run the speed test below.
+          Be the first to test the WiFi here. Use the Log speed here button to verify your location and run a speed test.
         </p>
       </section>
     );

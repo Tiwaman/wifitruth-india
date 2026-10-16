@@ -1,4 +1,5 @@
 import { INDIA_BBOX, inIndiaBbox } from "./india";
+import { kindForOsm } from "./lodging";
 import type { Place } from "./photon";
 
 export function buildNominatimUrl(q: string, limit = 8): string {
@@ -13,7 +14,8 @@ export function buildNominatimUrl(q: string, limit = 8): string {
     viewbox: `${minLon},${maxLat},${maxLon},${minLat}`,
     bounded: "1",
   });
-  return `https://nominatim.openstreetmap.org/search?${params}`;
+  const base = process.env.NOMINATIM_BASE_URL || "https://nominatim.openstreetmap.org";
+  return `${base}/search?${params}`;
 }
 
 interface NominatimItem {
@@ -23,6 +25,7 @@ interface NominatimItem {
   osm_type?: string;
   osm_id?: number;
   type?: string;
+  category?: string;
   address?: Record<string, unknown>;
 }
 
@@ -37,7 +40,8 @@ export function normalizeNominatim(json: unknown): Place[] {
     const lat = Number(item.lat);
     const lon = Number(item.lon);
     const name = str(item.name);
-    if (!name || !inIndiaBbox(lat, lon)) continue;
+    const kind = kindForOsm(item.category, item.type);
+    if (!name || !kind || !inIndiaBbox(lat, lon)) continue;
     if (a.country_code && str(a.country_code).toLowerCase() !== "in") continue;
     out.push({
       name,
@@ -47,7 +51,7 @@ export function normalizeNominatim(json: unknown): Place[] {
       lon,
       osmType: OSM_TYPES[str(item.osm_type)] ?? null,
       osmId: typeof item.osm_id === "number" ? item.osm_id : null,
-      kind: str(item.type) || null,
+      kind,
     });
   }
   return out;

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LocationCheck } from "@/components/LocationCheck";
 import { SpeedTest } from "@/components/SpeedTest";
@@ -94,7 +95,10 @@ export function StayMeasure({ stay }: { stay: Pick<Stay, "id" | "name" | "lat" |
           </p>
           {submit.status === "done" ? (
             <p role="status" data-testid="submit-message" data-status="done" className="rounded border-l-4 border-green-600 bg-green-50 p-3 text-sm text-green-900">
-              Thank you! Your reading was added.
+              Thank you! Your reading was added.{" "}
+              <Link href={`/stays/${stay.id}`} className="font-medium underline" data-testid="see-results">
+                See the results for {stay.name}
+              </Link>
             </p>
           ) : (
             <button

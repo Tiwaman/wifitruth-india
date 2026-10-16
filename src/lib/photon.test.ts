@@ -26,6 +26,31 @@ describe("normalizePhoton", () => {
     expect(r).toHaveLength(1);
     expect(r[0]).toMatchObject({ name: "Zostel", city: "Kasol", osmId: 5, kind: "hostel" });
   });
+  it("keeps only lodging and maps the OSM value to a stay kind", () => {
+    const f = (osm_key: string, osm_value: string, name = "X") => ({
+      geometry: { coordinates: [77.31, 32.01] },
+      properties: { name, countrycode: "IN", osm_key, osm_value },
+    });
+    const r = normalizePhoton({
+      features: [
+        f("tourism", "guest_house", "G"),
+        f("leisure", "resort", "R"),
+        f("tourism", "hotel", "H"),
+        f("place", "city", "Kasol"),
+        f("amenity", "cafe", "Cafe"),
+        f("tourism", "attraction", "Fort"),
+        f("shop", "supermarket", "Mart"),
+      ],
+    });
+    expect(r.map((p) => [p.name, p.kind])).toEqual([
+      ["G", "guesthouse"],
+      ["R", "resort"],
+      ["H", "hotel"],
+    ]);
+  });
+  it("drops places with no osm value", () => {
+    expect(normalizePhoton({ features: [{ geometry: { coordinates: [77.3, 32] }, properties: { name: "Mystery", countrycode: "IN" } }] })).toEqual([]);
+  });
   it("tolerates junk", () => {
     expect(normalizePhoton(null)).toEqual([]);
     expect(normalizePhoton({})).toEqual([]);

@@ -3,9 +3,11 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getStore } from "@/lib/data";
 import { isUuid } from "@/lib/http";
-import { getStaySummary } from "@/lib/stay-summary";
+import { getRecentReadings, getStaySummary } from "@/lib/stay-summary";
 import { BAND_LABEL, formatMbps } from "@/lib/format";
-import { StayMeasure } from "@/components/StayMeasure";
+import { RecentTrail } from "@/components/RecentTrail";
+import { ButtonLink } from "@/components/ui";
+import { KIND_LABEL } from "@/lib/lodging";
 import { StaySummaryCard } from "@/components/StaySummaryCard";
 import { StayMap } from "@/components/StayMap";
 
@@ -37,21 +39,24 @@ export default async function StayPage({ params }: { params: Promise<{ id: strin
   const store = getStore();
   const stay = await store.getStay(id);
   if (!stay) notFound();
-  const summary = await getStaySummary(store, id);
+  const [summary, recent] = await Promise.all([getStaySummary(store, id), getRecentReadings(store, id, 10)]);
   return (
     <div className="space-y-5">
       <Link href="/" className="inline-block text-sm text-blue-800 underline">
-        Back to search
+        Back to all stays
       </Link>
       <header>
         <h1 className="text-2xl font-bold tracking-tight">{stay.name}</h1>
         <p className="text-slate-700">
-          {stay.city}, {stay.state}
+          {KIND_LABEL[stay.kind]} · {stay.city}, {stay.state}
         </p>
       </header>
+      <ButtonLink href={`/log?stay=${stay.id}`} data-testid="log-here">
+        Log speed here
+      </ButtonLink>
       <StaySummaryCard summary={summary} />
+      <RecentTrail readings={recent} />
       <StayMap lat={stay.lat} lon={stay.lon} name={stay.name} />
-      <StayMeasure stay={{ id: stay.id, name: stay.name, lat: stay.lat, lon: stay.lon }} />
     </div>
   );
 }

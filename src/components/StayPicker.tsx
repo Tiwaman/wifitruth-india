@@ -15,7 +15,7 @@ interface Results {
   placesError: boolean;
 }
 
-export function StaySearch() {
+export function StayPicker() {
   const router = useRouter();
   const [q, setQ] = useState("");
   const [results, setResults] = useState<Results | null>(null);
@@ -58,11 +58,12 @@ export function StaySearch() {
     const res = await fetch("/api/stays", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...p, kind: "other" }),
+      body: JSON.stringify({ ...p, confirmLodging: true }),
     });
     const json = await res.json().catch(() => ({}));
+    if (res.status === 409 && json.existing) return router.push(`/log?stay=${json.existing.id}`);
     if (!res.ok) return setError(json.error ?? "Could not add this place. Try the manual form.");
-    router.push(`/stays/${json.stay.id}`);
+    router.push(`/log?stay=${json.stay.id}`);
   }
 
   return (
@@ -71,7 +72,7 @@ export function StaySearch() {
         type="search"
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        placeholder="Search a hostel, hotel or homestay in India"
+        placeholder="Search a hotel, hostel, guesthouse or homestay in India"
         aria-label="Search stays"
         className="w-full rounded-lg border border-slate-400 bg-white p-3"
       />
@@ -92,7 +93,7 @@ export function StaySearch() {
             <ul data-testid="known-stays" className="divide-y rounded border bg-white">
               {stays.map((s) => (
                 <li key={s.id}>
-                  <Link href={`/stays/${s.id}`} className="block p-3 hover:bg-slate-50">
+                  <Link href={`/log?stay=${s.id}`} className="block p-3 hover:bg-slate-50">
                     <span className="font-medium">{s.name}</span>
                     <span className="block text-sm text-slate-700">
                       {s.city}, {s.state}
@@ -104,7 +105,7 @@ export function StaySearch() {
           )}
           {places.length > 0 && (
             <div>
-              <h2 className="mb-1 text-sm font-semibold text-slate-700">More places from OpenStreetMap</h2>
+              <h2 className="mb-1 text-sm font-semibold text-slate-700">More stays from OpenStreetMap</h2>
               <ul data-testid="places" className="divide-y rounded border bg-white">
                 {places.map((p, i) => (
                   <li key={`${p.osmType}${p.osmId}${i}`}>
@@ -118,7 +119,7 @@ export function StaySearch() {
             </div>
           )}
           {!loading && stays.length === 0 && places.length === 0 && (
-            <p className="text-sm text-slate-700">No matches found.</p>
+            <p className="text-sm text-slate-700">No matching stays found. You can add it below.</p>
           )}
           {active.placesError && (
             <p className="text-xs text-slate-700">Map search is unavailable right now; showing known stays only.</p>

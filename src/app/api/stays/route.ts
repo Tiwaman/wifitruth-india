@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getStore } from "@/lib/data";
 import { readJson } from "@/lib/http";
 import { clientIp, createRateLimiter, formatWait, getSalt, hashValue, type RateLimiter } from "@/lib/readings";
-import { validateNewStay } from "@/lib/stay-validation";
+import { findNearDuplicate, validateNewStay } from "@/lib/stay-validation";
 
 export const dynamic = "force-dynamic";
 
@@ -41,6 +41,12 @@ export async function POST(req: Request) {
       const existing = await store.findStayByOsm(v.value.osmType, v.value.osmId);
       if (existing) return NextResponse.json({ stay: existing, created: false });
     }
+    const near = findNearDuplicate(await store.listStays({ limit: 5000 }), v.value);
+    if (near)
+      return NextResponse.json(
+        { error: `"${near.name}" is already listed nearby. Use that stay instead of adding it again.`, code: "duplicate", existing: near },
+        { status: 409 },
+      );
     const stay = await store.createStay(v.value);
     return NextResponse.json({ stay, created: true }, { status: 201 });
   } catch {

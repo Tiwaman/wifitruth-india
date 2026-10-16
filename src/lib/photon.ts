@@ -1,4 +1,6 @@
 import { INDIA_BBOX, inIndiaBbox } from "./india";
+import { kindForOsm } from "./lodging";
+import type { StayKind } from "./types";
 
 export interface Place {
   name: string;
@@ -8,7 +10,7 @@ export interface Place {
   lon: number;
   osmType: string | null;
   osmId: number | null;
-  kind: string | null;
+  kind: StayKind;
 }
 
 export function buildPhotonUrl(q: string, limit = 8): string {
@@ -19,7 +21,8 @@ export function buildPhotonUrl(q: string, limit = 8): string {
     lang: "en",
     bbox: `${minLon},${minLat},${maxLon},${maxLat}`,
   });
-  return `https://photon.komoot.io/api/?${params}`;
+  const base = process.env.PHOTON_BASE_URL || "https://photon.komoot.io";
+  return `${base}/api/?${params}`;
 }
 
 interface PhotonFeature {
@@ -36,7 +39,8 @@ export function normalizePhoton(json: unknown): Place[] {
     const p = f.properties ?? {};
     const [lon, lat] = f.geometry?.coordinates ?? [NaN, NaN];
     const name = str(p.name);
-    if (!name || !inIndiaBbox(lat, lon)) continue;
+    const kind = kindForOsm(p.osm_key, p.osm_value);
+    if (!name || !kind || !inIndiaBbox(lat, lon)) continue;
     if (p.countrycode && str(p.countrycode).toUpperCase() !== "IN") continue;
     out.push({
       name,
@@ -46,7 +50,7 @@ export function normalizePhoton(json: unknown): Place[] {
       lon,
       osmType: str(p.osm_type) || null,
       osmId: typeof p.osm_id === "number" ? p.osm_id : null,
-      kind: str(p.osm_value) || null,
+      kind,
     });
   }
   return out;

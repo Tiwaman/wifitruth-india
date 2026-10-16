@@ -21,10 +21,12 @@ test("user-added stay names are inert text on the stay page, map tooltip and sea
   await expect(page.locator(".leaflet-tooltip img, .leaflet-tooltip script")).toHaveCount(0);
   await expect(page.locator("main img[src='x'], main script")).toHaveCount(0);
 
-  await page.goto("/");
+  await page.goto("/?q=onerror");
+  await expect(page.getByTestId("stay-list")).toContainText("onerror");
+  await expect(page.locator("main img[src='x']")).toHaveCount(0);
+  await page.goto("/log");
   await page.getByLabel("Search stays").fill("onerror");
   await expect(page.getByTestId("known-stays")).toContainText("onerror");
-  await expect(page.getByTestId("recent-stays")).toContainText("onerror");
   await expect(page.locator("main img[src='x']")).toHaveCount(0);
   expect(await page.evaluate(() => (window as unknown as { __xss?: number }).__xss)).toBeUndefined();
 });
@@ -76,6 +78,7 @@ test("error responses do not leak internals", async ({ request }) => {
     await request.post("/api/readings", { data: { stayId: "00000000-0000-4000-8000-0000000000aa", deviceId: "valid-device-id-1234567890", spot: "room", downloadMbps: 10, uploadMbps: 5, latencyMs: 20, jitterMs: 1, packetLoss: 0, location: { lat: 20, lon: 80, accuracy: 5 } } }),
     await request.get("/api/stays/00000000-0000-4000-8000-0000000000aa/summary"),
     await request.post("/api/stays", { data: { name: "x" } }),
+    await request.get("/api/stays/00000000-0000-4000-8000-0000000000aa/readings"),
     await request.post("/api/readings", { headers: { "content-type": "application/json" }, data: "{" }),
   ];
   for (const r of responses) {

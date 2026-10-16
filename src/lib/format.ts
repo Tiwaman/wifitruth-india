@@ -16,3 +16,12 @@ export function formatAgo(days: number | null): string {
   if (days < 365) return `${Math.round(days / 30)} months ago`;
   return "over a year ago";
 }
+
+export function formatTimeAgo(iso: string, now: Date = new Date()): string {
+  const mins = Math.floor((now.getTime() - new Date(iso).getTime()) / 60_000);
+  if (!Number.isFinite(mins) || mins < 1) return "just now";
+  if (mins < 60) return `${mins} min ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours} ${hours === 1 ? "hour" : "hours"} ago`;
+  return formatAgo(Math.floor(hours / 24));
+}

@@ -32,9 +32,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Link href="/" className="text-lg font-bold text-blue-800">
               WiFiTruth India
             </Link>
-            <Link href="/privacy" className="text-sm text-slate-700 underline">
-              Privacy
-            </Link>
+            <nav aria-label="Main" className="flex gap-4 text-sm text-slate-700">
+              <Link href="/" className="underline">
+                Stays
+              </Link>
+              <Link href="/log" className="underline">
+                Log speed
+              </Link>
+              <Link href="/privacy" className="underline">
+                Privacy
+              </Link>
+            </nav>
           </div>
         </header>
         <main id="main" className="mx-auto max-w-3xl px-4 py-6">

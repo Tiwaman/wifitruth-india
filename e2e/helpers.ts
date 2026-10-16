@@ -20,10 +20,15 @@ export async function mockSpeedEngine(page: Page, result = DEFAULT_SPEED) {
 }
 
 /** No live network: OSM tiles and Photon search are stubbed so tests are deterministic. */
-export async function stubExternal(page: Page, places: unknown[] = []) {
+export async function stubTiles(page: Page) {
   await page.route("**/tile.openstreetmap.org/**", (route) =>
     route.fulfill({ status: 200, contentType: "image/png", body: Buffer.alloc(0) }),
   );
+}
+
+/** Tiles plus a canned /api/search answer. Use stubTiles alone to exercise the real Photon/Nominatim normalizers against e2e/stub-upstream.mjs. */
+export async function stubExternal(page: Page, places: unknown[] = []) {
+  await stubTiles(page);
   await page.route("**/api/search?**", (route) => route.fulfill({ json: { places, placesError: false } }));
 }
 
@@ -42,7 +47,7 @@ export async function createStay(request: APIRequestContext, over: Record<string
   const lon = 74 + Math.random() * 10;
   const name = uniq("E2E Stay");
   const res = await request.post("/api/stays", {
-    data: { name, kind: "hostel", city: "Testville", state: "Goa", lat, lon, ...over },
+    data: { name, kind: "hostel", city: "Testville", state: "Goa", lat, lon, confirmLodging: true, ...over },
   });
   if (res.status() !== 201) throw new Error(`createStay failed: ${res.status()} ${await res.text()}`);
   const { stay } = await res.json();

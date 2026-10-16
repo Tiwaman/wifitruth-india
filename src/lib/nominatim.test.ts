@@ -20,6 +20,24 @@ describe("nominatim", () => {
     ]);
   });
 
+  it("keeps only lodging and maps the type to a stay kind", () => {
+    const item = (name: string, category: string, type: string) => ({
+      lat: "15.5", lon: "73.8", name, osm_type: "way", osm_id: 1, category, type, address: { country_code: "in", state: "Goa" },
+    });
+    const places = normalizeNominatim([
+      item("Beach Hut", "tourism", "chalet"),
+      item("Camp", "tourism", "camp_site"),
+      item("Goa", "boundary", "administrative"),
+      item("Cafe Mondegar", "amenity", "cafe"),
+      item("Old Fort", "tourism", "attraction"),
+      item("Bad key", "amenity", "hotel"),
+    ]);
+    expect(places.map((p) => [p.name, p.kind])).toEqual([
+      ["Beach Hut", "homestay"],
+      ["Camp", "other"],
+    ]);
+  });
+
   it("returns an empty list for unexpected payloads", () => {
     expect(normalizeNominatim({ error: "x" })).toEqual([]);
     expect(normalizeNominatim(null)).toEqual([]);

@@ -6,7 +6,7 @@ test.use({ permissions: ["geolocation"] });
 test("speed test is locked until location is verified, then runs with mocked engine", async ({ page, context }) => {
   await context.setGeolocation({ latitude: 32.0101, longitude: 77.3153, accuracy: 20 });
   await mockSpeedEngine(page);
-  await page.goto(`/stays/${KASOL}`);
+  await page.goto(`/log?stay=${KASOL}`);
   await expect(page.getByTestId("speedtest-locked")).toBeVisible();
   await expect(page.getByRole("button", { name: /start speed test/i })).toBeDisabled();
   await page.getByRole("button", { name: /verify/i }).click();
@@ -20,7 +20,7 @@ test("speed test is locked until location is verified, then runs with mocked eng
 test("speed test stays locked when too far", async ({ page, context }) => {
   await context.setGeolocation({ latitude: 32.05, longitude: 77.3153, accuracy: 20 });
   await mockSpeedEngine(page);
-  await page.goto(`/stays/${KASOL}`);
+  await page.goto(`/log?stay=${KASOL}`);
   await page.getByRole("button", { name: /verify/i }).click();
   await expect(page.getByTestId("location-message")).toHaveAttribute("data-status", "too_far");
   await expect(page.getByRole("button", { name: /start speed test/i })).toBeDisabled();
@@ -29,7 +29,7 @@ test("speed test stays locked when too far", async ({ page, context }) => {
 test("submits a reading, then shows the duplicate message on a second submit", async ({ page, context }) => {
   await context.setGeolocation({ latitude: 32.0101, longitude: 77.3153, accuracy: 20 });
   await mockSpeedEngine(page);
-  await page.goto(`/stays/${KASOL}`);
+  await page.goto(`/log?stay=${KASOL}`);
   await page.getByRole("button", { name: /verify/i }).click();
   await expect(page.getByTestId("location-message")).toHaveAttribute("data-status", "ok");
   await page.getByRole("button", { name: /start speed test/i }).click();

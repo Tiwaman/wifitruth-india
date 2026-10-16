@@ -65,3 +65,18 @@
 
 ## Final gate (after M10)
 - ESLint, `tsc`, `next build` clean. Vitest: 15 files, 120 tests pass. Playwright: 35 pass, 3 consecutive runs.
+
+# v2 (see docs/PLAN-V2.md)
+
+## v2 M1 Data and rules (done)
+- `src/lib/lodging.ts`: OSM allow-list (tourism hotel, motel, hostel, guest_house, apartment, chalet, resort, camp_site, alpine_hut, wilderness_hut; leisure=resort) and mapping to `stay_kind` (motel->hotel, guest_house->guesthouse, apartment/chalet->homestay, camp_site/huts->other). Photon (`osm_key`/`osm_value`) and Nominatim (`category`/`type`) normalizers drop everything else; `Place.kind` is now always a `StayKind`.
+- Add-stay validation (server `POST /api/stays` and form contract): lodging type required (hotel, hostel, guesthouse, homestay, resort; "other" only when the request carries an OSM reference, i.e. camp sites/huts picked from map search), `confirmLodging: true` required, India bbox check, near-duplicate check (same name ignoring generic words like hotel/hostel, within 200 m, answers 409 with `existing`).
+- `GET /api/stays/summaries?q=&state=&sort=best|tested|recent` returns all stays with summaries (scoring lib) plus the list of states; unrated stays always last. `GET /api/stays/[id]/readings?limit=` returns the latest readings (default 10, max 50) with only spot, speeds, latency, jitter, band, createdAt.
+- Env overrides `PHOTON_BASE_URL` and `NOMINATIM_BASE_URL` (default to the public servers), used by e2e to point at a local stub.
+- Unit tests: 167 total (was 120).
+
+## v2 M2 Page structure (done, functional styling only)
+- `/` dashboard: hero placeholder with "Log internet speed" CTA, GET-form filters (search, state, sort), stay cards (median Mbps, red/yellow/green BandBar, test count, last tested). `/stays/[id]`: read-only detail (summary, spots, latest-tests trail, map, "Log speed here" -> `/log?stay=<id>`). `/log`: choose stay (lodging-only search or deep link), verify location, speed test and spot, submit, link back to results. Add-stay form moved to `/log` with type dropdown, confirm checkbox and "use my current location".
+- Shared styling lives in `src/components/ui.tsx` (Card, ButtonLink, Chip) and the existing BandBar/StayCard; measuring UI (`StayMeasure`) moved from the detail page to `LogFlow`. `StaySearch` renamed `StayPicker`. Test-mode flag (`NEXT_PUBLIC_SKIP_LOCATION_CHECK`) untouched and still handled in `StayMeasure`.
+- E2E: Playwright now also starts `e2e/stub-upstream.mjs` (port 3101) as a fake Photon/Nominatim that mixes lodging with cafes/cities/attractions, so the real normalizers are exercised without network. 46 e2e tests pass (was 35). Supabase env stays blanked.
+- Not done yet (later milestones): premium visual design, real hero artwork, stepper UI. Cleanup SQL for existing non-lodging rows is still to be documented (M5).
